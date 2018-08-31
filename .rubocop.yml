@@ -1,0 +1,12 @@
+Metrics/LineLength:
+  Max: 160
+Style/Documentation:
+  Enabled: false
+Style/FrozenStringLiteralComment:
+  Include:
+    - lib/**
+Metrics/BlockLength:
+  Exclude:
+    - 'Rakefile'
+    - '**/*.rake'
+    - 'spec/**/*.rb'
