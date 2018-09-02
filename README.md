@@ -1,8 +1,21 @@
-# Fasten
+# Fasten your seatbelts!
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/fasten`. To experiment with that code, run `bin/console` for an interactive prompt.
+FIXME: Add intro here
 
-TODO: Delete this and the text above, and describe your gem
+## Roadmap
+
+- [ ] define task to be run to reach a goal, with dependencies (similar to rake, make, and others)
+- [ ] run task in parallel by default
+- [ ] allow to programatically define new tasks
+- [ ] allow to programatically redefine existing tasks
+- [ ] keep each task log in a separate file, to easily debug errors
+- [ ] early stop in case of a failure
+- [ ] for non-tty execution, report with a simple progress log in STDOUT
+- [ ] calculate ETA of script, based on previos executions of the same script
+- [ ] for tty execution: start in background and provide a curses interface. When quit, the background process will keep running
+- [ ] provide a cli for running simple tasks
+- [ ] the cli can control (pause/stop/resume) other running executions
+
 
 ## Installation
 
