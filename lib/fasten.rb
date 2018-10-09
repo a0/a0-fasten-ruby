@@ -16,8 +16,8 @@ module Fasten
   class << self
     include Fasten::LogSupport
 
-    def load(path)
-      executor = Fasten::Executor.new
+    def load(path, **options)
+      executor = Fasten::Executor.new(**options)
 
       YAML.safe_load(File.read(path)).each do |name, params|
         params.each do |key, val|

@@ -2,15 +2,14 @@ module Fasten
   class Executor < Task
     include Fasten::LogSupport
 
-    def initialize(name: nil, max_child: 8)
+    def initialize(name: nil, workers: 8)
       super name: name || $PROGRAM_NAME
-      self.max_childs = max_child
+      self.workers = workers
 
       self.pid = $PID
-      self.tasks = {}
       self.dag = Fasten::DAG.new
       self.running = false
-      self.child_jobs = {}
+      self.children = {}
       self.running_tasks = []
     end
 
@@ -32,7 +31,7 @@ module Fasten
     protected
 
     def log_ini(object)
-      log_info "Init #{dag.done.count + running_tasks.count}/#{dag.tasks.count} #{object.class} #{object} "
+      log_info "Init #{dag.done.count + running_tasks.count}/#{dag.tasks.count} #{object.class} #{object}"
     end
 
     def log_fin(object)
@@ -46,17 +45,17 @@ module Fasten
         wait_children next_task
         run_next_task next_task
 
-        self.running = !(next_task.nil? && child_jobs.empty? && dag.waiting.empty?)
+        self.running = !(next_task.nil? && children.empty? && dag.waiting.empty?)
       end
 
       wait_remaining
     end
 
     def wait_children(next_task)
-      return unless (next_task.nil? && !child_jobs.empty?) || child_jobs.count >= max_childs
+      return unless (next_task.nil? && !children.empty?) || children.count >= workers
 
       pid = Process.wait(0)
-      done_task = child_jobs.delete pid
+      done_task = children.delete pid
       return unless done_task
 
       dag.update_task done_task, done: true, fin: Time.new
@@ -75,11 +74,11 @@ module Fasten
       pid = fork do
         next_task.perform
       end
-      child_jobs[pid] = next_task
+      children[pid] = next_task
     end
 
     def wait_remaining
-      child_jobs.each do |child_pid, child_task|
+      children.each do |child_pid, child_task|
         Process.wait child_pid
         dag.update_task child_task, done: true
       end

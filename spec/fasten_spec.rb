@@ -9,7 +9,7 @@ RSpec.describe Fasten do
   end
 
   it 'performs 500 tasks executor in parallel' do
-    f = Fasten::Executor.new max_child: 100
+    f = Fasten::Executor.new workers: 100
     500.times do |index|
       f.add Fasten::Task.new(name: index.to_s, shell: 'sleep 0.5')
     end
@@ -34,7 +34,7 @@ RSpec.describe Fasten do
       end
     end
 
-    f = Fasten::Executor.new(max_child: 50)
+    f = Fasten::Executor.new(workers: 50)
     l.values.map(&:values).flatten.each do |item|
       puts "#{item[:task]}: #{item[:after]}"
       f.add Fasten::Task.new(name: item[:task], after: item[:after], shell: 'sleep 0.5')
