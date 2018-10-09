@@ -1,0 +1,81 @@
+---
+clean:
+  shell: |
+    echo $$ running clean…
+    sleep 1
+    echo $$ ok clean.
+db-setup-1:
+  after:
+    - db-update
+    - compile-1
+  shell: |
+    echo $$ running db-setup-1…
+    sleep 1
+    echo $$ ok db-setup-1.
+db-setup-2:
+  after: db-update
+  shell: |
+    echo $$ running db-setup-2…
+    sleep 1
+    echo $$ ok db-setup-2.
+db-update:
+  after:
+    - db-sync
+    - db-reset
+  shell: |
+    echo $$ running db-update…
+    sleep 1
+    echo $$ ok db-update.
+db-reset:
+  after: env-setup
+  shell: |
+    echo $$ running db-reset…
+    sleep 1
+    echo $$ ok db-reset.
+db-sync:
+  after: env-setup
+  shell: |
+    echo $$ running db-sync…
+    sleep 1
+    echo $$ ok db-sync.
+fs-sync-1:
+  after: env-setup
+  shell: |
+    echo $$ running fs-sync-1…
+    sleep 1
+    echo $$ ok fs-sync-1.
+fs-sync-2:
+  after: env-setup
+  shell: |
+    echo $$ running fs-sync-2…
+    sleep 1
+    echo $$ ok fs-sync-2.
+compile-1:
+  after: env-setup
+  shell: |
+    echo $$ running compile-1…
+    sleep 1
+    echo $$ ok compile-1.
+compile-2:
+  after: env-setup
+  shell: |
+    echo $$ running compile-2…
+    sleep 1
+    echo $$ ok compile-2.
+compile-3:
+  after: env-setup
+  shell: |
+    echo $$ running compile-3…
+    sleep 1
+    echo $$ ok compile-3.
+version:
+  after: env-setup
+  shell: |
+    echo $$ running version…
+    sleep 1
+    echo $$ ok version.
+env-setup:
+  shell: |
+    echo $$ running env-setup…
+    sleep 1
+    echo $$ ok env-setup.

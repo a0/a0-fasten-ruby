@@ -28,6 +28,9 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop'
 
+  spec.add_runtime_dependency 'binding_of_caller'
+
   raise 'RubyGems 2.0 or newer is required to protect against public gem pushes.' unless spec.respond_to?(:metadata)
+
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
 end

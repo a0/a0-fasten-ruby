@@ -4,13 +4,14 @@ FIXME: Add intro here
 
 ## Roadmap
 
-- [ ] define task to be run to reach a goal, with dependencies (similar to rake, make, and others)
-- [ ] run task in parallel by default
-- [ ] allow to programatically define new tasks
+- [✔︎] define task to be run to reach a goal, with dependencies (similar to rake, make, and others)
+- [✔︎] run task in parallel by default
+- [ ] dynamicly change the number of worker processes
+- [✔︎] allow to programatically define new tasks
 - [ ] allow to programatically redefine existing tasks
 - [ ] keep each task log in a separate file, to easily debug errors
 - [ ] early stop in case of a failure
-- [ ] for non-tty execution, report with a simple progress log in STDOUT
+- [✔︎] for non-tty execution, report with a simple progress log in STDOUT
 - [ ] calculate ETA of script, based on previos executions of the same script
 - [ ] for tty execution: start in background and provide a curses interface. When quit, the background process will keep running
 - [ ] provide a cli for running simple tasks
