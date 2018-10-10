@@ -1,86 +1,103 @@
 module Fasten
   class Executor < Task
     include Fasten::LogSupport
+    include Fasten::DAG
+
+    attr_reader :task_running_list
 
     def initialize(name: nil, workers: 8)
-      super name: name || $PROGRAM_NAME
-      self.workers = workers
-
-      self.pid = $PID
-      self.dag = Fasten::DAG.new
-      self.running = false
-      self.children = {}
-      self.running_tasks = []
-    end
-
-    def add(task)
-      dag.add task
+      super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_list: []
+      initialize_dag
+      @task_running_list = []
     end
 
     def perform
-      log_ini self
-      self.ini = Time.new
-      self.running = true
+      log_ini self, running_stats
+      self.state = :RUNNING
 
       perform_loop
 
-      self.fin = Time.new
-      log_fin self
+      self.state = :IDLE
+      log_fin self, running_stats
     end
 
-    protected
-
-    def log_ini(object)
-      log_info "Init #{dag.done.count + running_tasks.count}/#{dag.tasks.count} #{object.class} #{object}"
+    def done_stats
+      "#{task_done_list.count}/#{task_list.count}"
     end
 
-    def log_fin(object)
-      log_info "Done #{dag.done.count}/#{dag.tasks.count} #{object.class} #{object} in #{object.fin - object.ini}"
+    def running_stats
+      "#{task_done_list.count + task_running_list.count}/#{task_list.count}"
     end
 
-    def perform_loop
-      while running
-        next_task = dag.next_task
+    def perform_loop(kind: Fasten::Worker)
+      loop do
+        task = next_task
 
-        wait_children next_task
-        run_next_task next_task
+        wait_for_jobs task
+        remove_workers_as_needed
+        create_workers_as_needed kind
+        worker_run_next_task task
 
-        self.running = !(next_task.nil? && children.empty? && dag.waiting.empty?)
+        break if task.nil? && task_running_list.empty? && task_waiting_list.empty?
       end
 
-      wait_remaining
+      remove_all_workers
     end
 
-    def wait_children(next_task)
-      return unless (next_task.nil? && !children.empty?) || children.count >= workers
+    def wait_for_jobs(next_task)
+      while (next_task.nil? && !task_running_list.empty?) || task_running_list.count >= workers
+        reads = worker_list.map(&:parent_read)
+        reads, _writes, _errors = IO.select(reads, [], [], 10)
 
-      pid = Process.wait(0)
-      done_task = children.delete pid
-      return unless done_task
-
-      dag.update_task done_task, done: true, fin: Time.new
-      running_tasks.delete done_task
-
-      log_fin done_task
+        receive_workers_tasks(reads)
+      end
     end
 
-    def run_next_task(next_task)
+    def receive_workers_tasks(reads)
+      reads&.each do |read|
+        worker = worker_list.find { |item| item.parent_read == read }
+        task = worker.receive
+
+        update_done_task task
+        log_fin task, done_stats
+        task_running_list.delete task
+      end
+    end
+
+    def remove_workers_as_needed
+      while worker_list.count > workers
+        return unless (worker = worker_list.find { |item| item.running_task.nil? })
+
+        worker.kill
+        worker_list.delete worker
+      end
+    end
+
+    def create_workers_as_needed(kind)
+      @worker_id ||= 0
+      while worker_list.count < workers
+        @worker_id += 1
+        worker = kind.new name: "#{kind} #{format '%02X', @worker_id}"
+        worker.fork
+        worker_list << worker
+
+        log_info "Worker created: #{worker}"
+      end
+    end
+
+    def worker_run_next_task(next_task)
       return unless next_task
 
-      running_tasks << next_task
-      log_ini next_task
+      worker = worker_list.find { |item| item.running_task.nil? }
 
-      next_task.ini = Time.new
-      pid = fork do
-        next_task.perform
-      end
-      children[pid] = next_task
+      log_ini next_task
+      worker.dispatch(next_task)
+      task_running_list << next_task
     end
 
-    def wait_remaining
-      children.each do |child_pid, child_task|
-        Process.wait child_pid
-        dag.update_task child_task, done: true
+    def remove_all_workers
+      while (worker = worker_list.pop)
+        worker.kill
       end
     end
   end

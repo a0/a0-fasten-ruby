@@ -8,6 +8,7 @@ require 'ostruct'
 
 require 'fasten/log_support'
 require 'fasten/task'
+require 'fasten/worker'
 require 'fasten/dag'
 require 'fasten/executor'
 require 'fasten/version'
@@ -18,18 +19,25 @@ module Fasten
 
     def load(path, **options)
       executor = Fasten::Executor.new(**options)
+      executor.load(path)
 
-      YAML.safe_load(File.read(path)).each do |name, params|
+      executor
+    end
+  end
+
+  class Executor
+    def load(path)
+      items = YAML.safe_load(File.read(path)).each do |name, params|
         params.each do |key, val|
           next unless val.is_a?(String) && (match = %r{^/(.+)/$}.match(val))
 
           params[key] = Regexp.new(match[1])
         end
-        executor.add Fasten::Task.new({ name: name }.merge(params))
+
+        add Fasten::Task.new({ name: name }.merge(params))
       end
 
-      log_info "Loaded #{executor.dag.tasks.count} tasks from #{path}"
-      executor
+      log_info "Loaded #{items.count} tasks from #{path}"
     end
   end
 end
