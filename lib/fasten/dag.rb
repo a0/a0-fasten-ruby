@@ -94,19 +94,19 @@ module Fasten
       task_waiting_list.empty?
     end
 
-    def no_tasks_running?
+    def no_running_tasks?
       task_running_list.empty?
     end
 
-    def are_tasks_waiting?
+    def tasks_waiting?
       !task_waiting_list.empty?
     end
 
-    def are_tasks_running?
+    def tasks_running?
       !task_running_list.empty?
     end
 
-    def are_tasks_error?
+    def tasks_failed?
       !task_error_list.empty?
     end
   end

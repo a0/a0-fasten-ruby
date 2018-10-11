@@ -38,14 +38,14 @@ module Fasten
         remove_workers_as_needed
         dispatch_pending_tasks
 
-        break if no_tasks_running? && no_waiting_tasks?
+        break if no_running_tasks? && no_waiting_tasks?
       end
 
       remove_all_workers
     end
 
     def wait_for_running_tasks
-      while (no_waiting_tasks? && are_tasks_running?) || task_running_list.count >= workers || (are_tasks_running? && are_tasks_error?)
+      while (no_waiting_tasks? && tasks_running?) || task_running_list.count >= workers || (tasks_running? && tasks_failed?)
         reads = worker_list.map(&:parent_read)
         reads, _writes, _errors = IO.select(reads, [], [], 10)
 
@@ -67,7 +67,7 @@ module Fasten
     end
 
     def raise_error_in_failure
-      return unless are_tasks_error?
+      return unless tasks_failed?
 
       remove_all_workers
 
@@ -101,7 +101,7 @@ module Fasten
     end
 
     def dispatch_pending_tasks
-      while are_tasks_waiting? && task_running_list.count < workers
+      while tasks_waiting? && task_running_list.count < workers
         worker = find_or_create_worker
 
         task = next_task
