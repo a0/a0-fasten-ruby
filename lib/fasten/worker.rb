@@ -2,14 +2,12 @@ module Fasten
   class Worker < Task
     include Fasten::LogSupport
 
-    def initialize(name: nil)
-      super name: name
+    def initialize(executor:, name: nil)
+      super executor: executor, name: name
     end
 
     def perform(task)
-      log_ini task, 'perform'
       system task.shell if task.shell
-      log_fin task, 'perform'
     end
 
     def fork
@@ -69,7 +67,7 @@ module Fasten
       log_ini self, 'process_incoming_tasks'
 
       while (object = Marshal.load(child_read)) # rubocop:disable Security/MarshalLoad
-        perform_task(object) if object.is_a? Fasten::Task
+        run_task(object) if object.is_a? Fasten::Task
       end
 
       log_fin self, 'process_incoming_tasks'
@@ -77,10 +75,22 @@ module Fasten
       log_info 'Terminating on EOF'
     end
 
+    def run_task(task)
+      log_ini task, 'perform'
+      redirect_std "#{executor.fasten_dir}/log/task/#{task.name}.log"
+
+      perform_task task
+
+      restore_std
+      log_fin task, 'perform'
+    end
+
     def perform_task(task)
-      task.ini ||= Time.new
+      log_ini task, 'perform'
+
       perform(task)
-      task.fin ||= Time.new
+
+      log_fin task, 'perform'
       Marshal.dump(task, child_write)
     rescue StandardError => error
       task.error = error

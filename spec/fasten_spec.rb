@@ -8,7 +8,7 @@ RSpec.describe Fasten do
     f.perform
   end
 
-  it 'performs 500 tasks executor in parallel' do
+  it 'performs 500 tasks with 100 workers, without dependencies' do
     `rm -f *.testfile`
     f = Fasten::Executor.new workers: 100
     500.times do |index|
@@ -23,7 +23,7 @@ RSpec.describe Fasten do
     raise "Files don't match, files: #{files} items: #{items}" unless files.sort == items.sort
   end
 
-  it 'performs 500 tasks with dependencies' do
+  it 'performs 500 tasks with 5 workers, including dependencies' do
     `rm -f *.testfile`
     l = {}
     500.times do
@@ -45,7 +45,6 @@ RSpec.describe Fasten do
 
     f = Fasten::Executor.new(workers: 50)
     l.values.map(&:values).flatten.each do |item|
-      puts "#{item[:task]}: #{item[:after]}"
       f.add Fasten::Task.new(name: item[:task], after: item[:after], shell: item[:shell])
     end
     f.perform

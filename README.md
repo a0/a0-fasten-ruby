@@ -9,7 +9,7 @@ FIXME: Add intro here
 - [x] dynamicly change the number of worker processes
 - [x] allow to programatically define new tasks
 - [ ] allow to programatically redefine existing tasks
-- [ ] keep each task log in a separate file, to easily debug errors
+- [x] keep each task log in a separate file, to easily debug errors
 - [x] early stop in case of failure
 - [x] for non-tty execution, report with a simple progress log in STDOUT
 - [ ] calculate ETA of script, based on previos executions of the same script

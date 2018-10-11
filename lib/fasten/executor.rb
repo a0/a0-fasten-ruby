@@ -3,15 +3,15 @@ module Fasten
     include Fasten::LogSupport
     include Fasten::DAG
 
-    attr_reader :task_running_list
-
-    def initialize(name: nil, workers: 8, worker_class: Fasten::Worker)
-      super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, worker_list: []
+    def initialize(name: nil, workers: 8, worker_class: Fasten::Worker, fasten_dir: '.fasten/')
+      super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, fasten_dir: fasten_dir
       initialize_dag
-      @task_running_list = []
+
+      self.worker_list = []
     end
 
     def perform
+      redirect_std "#{fasten_dir}/log/executor/#{name}.log"
       log_ini self, running_stats
       self.state = :RUNNING
 
@@ -19,6 +19,8 @@ module Fasten
 
       self.state = :IDLE
       log_fin self, running_stats
+    ensure
+      restore_std
     end
 
     def done_stats
@@ -36,14 +38,14 @@ module Fasten
         remove_workers_as_needed
         dispatch_pending_tasks
 
-        break if task_running_list.empty? && task_waiting_list.empty?
+        break if no_tasks_running? && no_waiting_tasks?
       end
 
       remove_all_workers
     end
 
     def wait_for_running_tasks
-      while (task_waiting_list.empty? && !task_running_list.empty?) || task_running_list.count >= workers || (!task_running_list.empty? && !task_error_list.empty?)
+      while (no_waiting_tasks? && are_tasks_running?) || task_running_list.count >= workers || (are_tasks_running? && are_tasks_error?)
         reads = worker_list.map(&:parent_read)
         reads, _writes, _errors = IO.select(reads, [], [], 10)
 
@@ -65,11 +67,13 @@ module Fasten
     end
 
     def raise_error_in_failure
-      return if task_error_list.empty?
+      return unless are_tasks_error?
 
       remove_all_workers
 
-      raise "Stopping because the following #{task_error_list.count} tasks failed: #{task_error_list.map(&:to_s).join(', ')}"
+      count = task_error_list.count
+
+      raise "Stopping because the following #{count} #{count == 1 ? 'task' : 'tasks'} failed: #{task_error_list.map(&:to_s).join(', ')}"
     end
 
     def remove_workers_as_needed
@@ -86,7 +90,7 @@ module Fasten
 
       unless worker
         @worker_id = (@worker_id || 0) + 1
-        worker = worker_class.new name: "#{worker_class} #{format '%02X', @worker_id}"
+        worker = worker_class.new executor: self, name: "#{worker_class} #{format '%02X', @worker_id}"
         worker.fork
         worker_list << worker
 
@@ -97,7 +101,7 @@ module Fasten
     end
 
     def dispatch_pending_tasks
-      while !task_waiting_list.empty? && task_running_list.count < workers
+      while are_tasks_waiting? && task_running_list.count < workers
         worker = find_or_create_worker
 
         task = next_task

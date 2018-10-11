@@ -1,15 +1,14 @@
 module Fasten
   module DAG
-    attr_reader :task_list, :task_done_list, :task_error_list, :task_pending_list
+    attr_reader :task_list, :task_done_list, :task_error_list, :task_pending_list, :task_running_list
 
     def initialize_dag
-      @task_map ||= {}
-      @task_list ||= []
-      @task_done_list ||= []
-      @task_error_list ||= []
-      @task_pending_list ||= []
-
-      nil
+      @task_map = {}
+      @task_list = []
+      @task_done_list = []
+      @task_error_list = []
+      @task_pending_list = []
+      @task_running_list = []
     end
 
     def add(task)
@@ -89,6 +88,26 @@ module Fasten
           after_task.dependants << task
         end
       end
+    end
+
+    def no_waiting_tasks?
+      task_waiting_list.empty?
+    end
+
+    def no_tasks_running?
+      task_running_list.empty?
+    end
+
+    def are_tasks_waiting?
+      !task_waiting_list.empty?
+    end
+
+    def are_tasks_running?
+      !task_running_list.empty?
+    end
+
+    def are_tasks_error?
+      !task_error_list.empty?
     end
   end
 end
