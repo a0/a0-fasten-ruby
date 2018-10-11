@@ -5,8 +5,8 @@ module Fasten
 
     attr_reader :task_running_list
 
-    def initialize(name: nil, workers: 8)
-      super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_list: []
+    def initialize(name: nil, workers: 8, worker_class: Fasten::Worker)
+      super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, worker_list: []
       initialize_dag
       @task_running_list = []
     end
@@ -29,23 +29,20 @@ module Fasten
       "#{task_done_list.count + task_running_list.count}/#{task_list.count}"
     end
 
-    def perform_loop(kind: Fasten::Worker)
+    def perform_loop
       loop do
-        task = next_task
-
-        wait_for_jobs task
+        wait_for_running_tasks
         remove_workers_as_needed
-        create_workers_as_needed kind
-        worker_run_next_task task
+        dispatch_pending_tasks
 
-        break if task.nil? && task_running_list.empty? && task_waiting_list.empty?
+        break if task_running_list.empty? && task_waiting_list.empty?
       end
 
       remove_all_workers
     end
 
-    def wait_for_jobs(next_task)
-      while (next_task.nil? && !task_running_list.empty?) || task_running_list.count >= workers
+    def wait_for_running_tasks
+      while (task_waiting_list.empty? && !task_running_list.empty?) || task_running_list.count >= workers
         reads = worker_list.map(&:parent_read)
         reads, _writes, _errors = IO.select(reads, [], [], 10)
 
@@ -73,26 +70,30 @@ module Fasten
       end
     end
 
-    def create_workers_as_needed(kind)
-      @worker_id ||= 0
-      while worker_list.count < workers
-        @worker_id += 1
-        worker = kind.new name: "#{kind} #{format '%02X', @worker_id}"
+    def find_or_create_worker
+      worker = worker_list.find { |item| item.running_task.nil? }
+
+      unless worker
+        @worker_id = (@worker_id || 0) + 1
+        worker = worker_class.new name: "#{worker_class} #{format '%02X', @worker_id}"
         worker.fork
         worker_list << worker
 
         log_info "Worker created: #{worker}"
       end
+
+      worker
     end
 
-    def worker_run_next_task(next_task)
-      return unless next_task
+    def dispatch_pending_tasks
+      while !task_waiting_list.empty? && task_running_list.count < workers
+        worker = find_or_create_worker
 
-      worker = worker_list.find { |item| item.running_task.nil? }
-
-      log_ini next_task
-      worker.dispatch(next_task)
-      task_running_list << next_task
+        task = next_task
+        log_ini task, "on worker #{worker}"
+        worker.dispatch(task)
+        task_running_list << task
+      end
     end
 
     def remove_all_workers

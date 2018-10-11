@@ -6,7 +6,7 @@ FIXME: Add intro here
 
 - [x] define task to be run to reach a goal, with dependencies (similar to rake, make, and others)
 - [x] run task in parallel by default
-- [ ] dynamicly change the number of worker processes
+- [x] dynamicly change the number of worker processes
 - [x] allow to programatically define new tasks
 - [ ] allow to programatically redefine existing tasks
 - [ ] keep each task log in a separate file, to easily debug errors
