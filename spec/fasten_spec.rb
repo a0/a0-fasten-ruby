@@ -9,21 +9,30 @@ RSpec.describe Fasten do
   end
 
   it 'performs 500 tasks executor in parallel' do
+    `rm -f *.testfile`
     f = Fasten::Executor.new workers: 100
     500.times do |index|
-      f.add Fasten::Task.new(name: index.to_s, shell: 'sleep 0.5')
+      f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.1; touch #{index}.testfile")
     end
     f.perform
+
+    files = Dir['*.testfile']
+    items = f.task_list.map { |item| "#{item}.testfile" }
+    `rm -f *.testfile`
+
+    raise "Files don't match, files: #{files} items: #{items}" unless files.sort == items.sort
   end
 
   it 'performs 500 tasks with dependencies' do
+    `rm -f *.testfile`
     l = {}
-    500.times do
+    500.times do |i|
       m = rand(65..90).chr
       n = rand(97..122).chr
       l[m] ||= {}
       l[m][n] ||= []
-      l[m][n] << { task: "task-#{m}-#{n}-#{l[m][n].count + 1}", after: nil }
+      key = "task-#{m}-#{n}-#{l[m][n].count + 1}"
+      l[m][n] << { task: key, after: nil, shell: "sleep 0.1; touch #{key}.testfile" }
     end
 
     l.values.each do |value|
@@ -37,8 +46,14 @@ RSpec.describe Fasten do
     f = Fasten::Executor.new(workers: 50)
     l.values.map(&:values).flatten.each do |item|
       puts "#{item[:task]}: #{item[:after]}"
-      f.add Fasten::Task.new(name: item[:task], after: item[:after], shell: 'sleep 0.5')
+      f.add Fasten::Task.new(name: item[:task], after: item[:after], shell: item[:shell])
     end
     f.perform
+
+    files = Dir['*.testfile']
+    items = f.task_list.map { |item| "#{item}.testfile" }
+    `rm -f *.testfile`
+
+    raise "Files don't match, files: #{files} items: #{items}" unless files.sort == items.sort
   end
 end
