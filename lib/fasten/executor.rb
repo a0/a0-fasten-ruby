@@ -32,6 +32,7 @@ module Fasten
     def perform_loop
       loop do
         wait_for_running_tasks
+        raise_error_in_failure
         remove_workers_as_needed
         dispatch_pending_tasks
 
@@ -42,7 +43,7 @@ module Fasten
     end
 
     def wait_for_running_tasks
-      while (task_waiting_list.empty? && !task_running_list.empty?) || task_running_list.count >= workers
+      while (task_waiting_list.empty? && !task_running_list.empty?) || task_running_list.count >= workers || (!task_running_list.empty? && !task_error_list.empty?)
         reads = worker_list.map(&:parent_read)
         reads, _writes, _errors = IO.select(reads, [], [], 10)
 
@@ -55,10 +56,20 @@ module Fasten
         worker = worker_list.find { |item| item.parent_read == read }
         task = worker.receive
 
-        update_done_task task
-        log_fin task, done_stats
         task_running_list.delete task
+
+        update_task task
+
+        log_fin task, done_stats
       end
+    end
+
+    def raise_error_in_failure
+      return if task_error_list.empty?
+
+      remove_all_workers
+
+      raise "Stopping because the following #{task_error_list.count} tasks failed: #{task_error_list.map(&:to_s).join(', ')}"
     end
 
     def remove_workers_as_needed

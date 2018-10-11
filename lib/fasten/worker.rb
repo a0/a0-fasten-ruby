@@ -16,14 +16,12 @@ module Fasten
       create_pipes
 
       self.pid = Process.fork do
-        parent_read.close
-        parent_write.close
+        close_parent_pipes
 
         process_incoming_tasks
       end
 
-      child_read.close
-      child_write.close
+      close_child_pipes
     end
 
     def dispatch(task)
@@ -32,9 +30,9 @@ module Fasten
     end
 
     def receive
-      updated_task = Marshal.load(parent_read)
+      updated_task = Marshal.load(parent_read) # rubocop:disable Security/MarshalLoad
 
-      %i[ini fin response].each { |key| running_task[key] = updated_task[key] }
+      %i[ini fin response error].each { |key| running_task[key] = updated_task[key] }
 
       task = running_task
       self.running_task = nil
@@ -45,6 +43,7 @@ module Fasten
     def kill
       log_info 'Removing worker'
       Process.kill(:KILL, pid)
+      close_parent_pipes
     rescue StandardError => error
       log_warn "Ignoring error killing worker #{self}, error: #{error}"
     end
@@ -56,10 +55,20 @@ module Fasten
       self.parent_read, self.child_write = IO.pipe
     end
 
+    def close_parent_pipes
+      parent_read.close unless parent_read.closed?
+      parent_write.close unless parent_write.closed?
+    end
+
+    def close_child_pipes
+      child_read.close unless child_read.closed?
+      child_write.close unless child_write.closed?
+    end
+
     def process_incoming_tasks
       log_ini self, 'process_incoming_tasks'
 
-      while (object = Marshal.load(child_read))
+      while (object = Marshal.load(child_read)) # rubocop:disable Security/MarshalLoad
         perform_task(object) if object.is_a? Fasten::Task
       end
 
@@ -72,6 +81,9 @@ module Fasten
       task.ini ||= Time.new
       perform(task)
       task.fin ||= Time.new
+      Marshal.dump(task, child_write)
+    rescue StandardError => error
+      task.error = error
       Marshal.dump(task, child_write)
     end
   end

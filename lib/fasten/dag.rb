@@ -1,11 +1,12 @@
 module Fasten
   module DAG
-    attr_reader :task_list, :task_done_list, :task_pending_list
+    attr_reader :task_list, :task_done_list, :task_error_list, :task_pending_list
 
     def initialize_dag
       @task_map ||= {}
       @task_list ||= []
       @task_done_list ||= []
+      @task_error_list ||= []
       @task_pending_list ||= []
 
       nil
@@ -19,6 +20,14 @@ module Fasten
       @task_waiting_list = nil
     end
 
+    def update_task(task)
+      if task.error
+        update_error_task task
+      else
+        update_done_task task
+      end
+    end
+
     def update_done_task(task)
       @task_done_list << task
       @task_pending_list.delete task
@@ -27,6 +36,11 @@ module Fasten
       end
 
       move_pending_to_waiting
+    end
+
+    def update_error_task(task)
+      @task_error_list << task
+      @task_pending_list.delete task
     end
 
     def next_task

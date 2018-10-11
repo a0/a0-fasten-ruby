@@ -26,7 +26,7 @@ RSpec.describe Fasten do
   it 'performs 500 tasks with dependencies' do
     `rm -f *.testfile`
     l = {}
-    500.times do |i|
+    500.times do
       m = rand(65..90).chr
       n = rand(97..122).chr
       l[m] ||= {}
