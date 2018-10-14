@@ -5,12 +5,14 @@ require 'yaml'
 require 'binding_of_caller'
 require 'logger'
 require 'ostruct'
+require 'curses'
 
 require 'fasten/log_support'
 require 'fasten/task'
-require 'fasten/worker'
+require 'fasten/ui'
 require 'fasten/dag'
 require 'fasten/executor'
+require 'fasten/worker'
 require 'fasten/version'
 
 module Fasten

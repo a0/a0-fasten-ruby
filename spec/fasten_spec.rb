@@ -3,16 +3,16 @@ RSpec.describe Fasten do
     expect(Fasten::VERSION).not_to be nil
   end
 
-  it 'performs an empty executor' do
-    f = Fasten::Executor.new
+  it 'performs an empty executor' do |ex|
+    f = Fasten::Executor.new name: ex.description
     f.perform
   end
 
-  it 'performs 500 tasks with 100 workers, without dependencies' do
+  it 'performs 500 tasks with 100 workers, without dependencies' do |ex|
     `rm -f *.testfile`
-    f = Fasten::Executor.new workers: 100
+    f = Fasten::Executor.new name: ex.description, workers: 100
     500.times do |index|
-      f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.1; touch #{index}.testfile")
+      f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.2; touch #{index}.testfile")
     end
     f.perform
 
@@ -23,7 +23,7 @@ RSpec.describe Fasten do
     raise "Files don't match, files: #{files} items: #{items}" unless files.sort == items.sort
   end
 
-  it 'performs 500 tasks with 5 workers, including dependencies' do
+  it 'performs 500 tasks with 5 workers, including dependencies' do |ex|
     `rm -f *.testfile`
     l = {}
     500.times do
@@ -43,7 +43,7 @@ RSpec.describe Fasten do
       end
     end
 
-    f = Fasten::Executor.new(workers: 50)
+    f = Fasten::Executor.new name: ex.description, workers: 50
     l.values.map(&:values).flatten.each do |item|
       f.add Fasten::Task.new(name: item[:task], after: item[:after], shell: item[:shell])
     end

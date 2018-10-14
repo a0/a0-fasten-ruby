@@ -3,7 +3,7 @@ module Fasten
     include Fasten::LogSupport
 
     def initialize(executor:, name: nil)
-      super executor: executor, name: name
+      super executor: executor, name: name, spinner: 0
     end
 
     def perform(task)
@@ -23,8 +23,10 @@ module Fasten
     end
 
     def dispatch(task)
-      Marshal.dump(task, parent_write)
+      Marshal.dump(Task.new(task.to_h.merge(depends: nil, dependants: nil)), parent_write)
       self.running_task = task
+      task.worker = self
+      task.state = :RUNNING
     end
 
     def receive
@@ -34,6 +36,7 @@ module Fasten
 
       task = running_task
       self.running_task = nil
+      task.state = task.error ? :ERROR : :DONE
 
       task
     end
@@ -44,6 +47,14 @@ module Fasten
       close_parent_pipes
     rescue StandardError => error
       log_warn "Ignoring error killing worker #{self}, error: #{error}"
+    end
+
+    def idle?
+      running_task.nil?
+    end
+
+    def running?
+      !idle?
     end
 
     protected
@@ -77,11 +88,13 @@ module Fasten
 
     def run_task(task)
       log_ini task, 'perform'
+      Fasten.logger.reopen(STDOUT)
       redirect_std "#{executor.fasten_dir}/log/task/#{task.name}.log"
 
       perform_task task
 
       restore_std
+      Fasten.logger.reopen(executor.log_file)
       log_fin task, 'perform'
     end
 

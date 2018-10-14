@@ -13,10 +13,10 @@ class ErrorWorker < Fasten::Worker
 end
 
 RSpec.describe Fasten do
-  it 'early stop in case of failure' do
+  it 'early stop in case of failure' do |ex|
     `rm -f *.testfile`
 
-    f = Fasten::Executor.new workers: 1, worker_class: ErrorWorker
+    f = Fasten::Executor.new name: ex.description, workers: 1, worker_class: ErrorWorker
 
     100.times do |index|
       f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.05; touch #{index}.testfile")
@@ -29,10 +29,10 @@ RSpec.describe Fasten do
     raise "Should only be 9 testfiles, but there are #{files.count}" unless files.count == 9
   end
 
-  it 'it should wait other tasks end in case of failure' do
+  it 'it should wait other tasks end in case of failure' do |ex|
     `rm -f *.testfile`
 
-    f = Fasten::Executor.new workers: 10, worker_class: ErrorWorker
+    f = Fasten::Executor.new name: ex.description, workers: 10, worker_class: ErrorWorker
 
     100.times do |index|
       f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.1; touch #{index}.testfile")

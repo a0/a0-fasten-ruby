@@ -1,11 +1,11 @@
 RSpec.describe Fasten do
-  it 'can load a YAML file' do
-    Fasten.load('spec/yaml_spec.yml')
+  it 'can load a YAML file' do |ex|
+    Fasten.load('spec/yaml_spec.yml', name: ex.description)
   end
 
-  it 'can perform a YAML file' do
+  it 'can perform a YAML file' do |ex|
     `rm -f *.testfile`
-    f = Fasten.load('spec/yaml_spec.yml')
+    f = Fasten.load('spec/yaml_spec.yml', name: ex.description)
     f.perform
 
     files = Dir['*.testfile']

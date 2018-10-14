@@ -10,3 +10,7 @@ Metrics/BlockLength:
     - 'Rakefile'
     - '**/*.rake'
     - 'spec/**/*.rb'
+Metrics/AbcSize:
+  Max: 17
+Metrics/MethodLength:
+  Max: 15

@@ -2,25 +2,29 @@ module Fasten
   class Executor < Task
     include Fasten::LogSupport
     include Fasten::DAG
+    include Fasten::UI
 
-    def initialize(name: nil, workers: 8, worker_class: Fasten::Worker, fasten_dir: '.fasten/')
+    def initialize(name: nil, workers: 8, worker_class: Fasten::Worker, fasten_dir: '.fasten')
       super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, fasten_dir: fasten_dir
       initialize_dag
 
       self.worker_list = []
+      log_path = "#{fasten_dir}/log/executor/#{self.name}.log"
+      FileUtils.mkdir_p File.dirname(log_path)
+      self.log_file = File.new(log_path, 'a')
+      Fasten.logger.reopen log_file
     end
 
     def perform
-      redirect_std "#{fasten_dir}/log/executor/#{name}.log"
       log_ini self, running_stats
       self.state = :RUNNING
 
-      perform_loop
+      run_ui do
+        perform_loop
+      end
 
       self.state = :IDLE
       log_fin self, running_stats
-    ensure
-      restore_std
     end
 
     def done_stats
@@ -46,11 +50,13 @@ module Fasten
 
     def wait_for_running_tasks
       while (no_waiting_tasks? && tasks_running?) || task_running_list.count >= workers || (tasks_running? && tasks_failed?)
+        ui_update
         reads = worker_list.map(&:parent_read)
-        reads, _writes, _errors = IO.select(reads, [], [], 10)
+        reads, _writes, _errors = IO.select(reads, [], [], 0.2)
 
         receive_workers_tasks(reads)
       end
+      ui_update
     end
 
     def receive_workers_tasks(reads)

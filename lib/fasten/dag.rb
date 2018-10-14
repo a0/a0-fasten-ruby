@@ -31,7 +31,7 @@ module Fasten
       @task_done_list << task
       @task_pending_list.delete task
       task.dependants.each do |dependant_task|
-        dependant_task.depends -= 1
+        dependant_task.depends.delete task
       end
 
       move_pending_to_waiting
@@ -58,7 +58,7 @@ module Fasten
 
     def move_pending_to_waiting
       move_list = task_pending_list.select do |task|
-        task.depends.zero?
+        task.depends.count.zero?
       end
 
       @task_waiting_list ||= []
@@ -71,7 +71,8 @@ module Fasten
       @task_done_list.clear
       @task_list.each do |task|
         task.dependants = []
-        task.depends = 0
+        task.depends = []
+        task.level = 0
         task.done ? @task_done_list << task : @task_pending_list << task
       end
     end
@@ -84,7 +85,8 @@ module Fasten
           after_task = after.is_a?(Task) ? after : @task_map[after]
           raise "Dependency task '#{after}' not found on task '#{task.name}'." unless after_task
 
-          task.depends += 1
+          task.depends << after_task
+          task.level += 1
           after_task.dependants << task
         end
       end

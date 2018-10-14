@@ -13,9 +13,11 @@ FIXME: Add intro here
 - [x] early stop in case of failure
 - [x] for non-tty execution, report with a simple progress log in STDOUT
 - [ ] calculate ETA of script, based on previos executions of the same script
+- [ ] calculate ETA without previous information
 - [ ] for tty execution: start in background and provide a curses interface. When quit, the background process will keep running
 - [ ] provide a cli for running simple tasks
-- [ ] provide a curses mode that displays ETA, number of workers, running tasks, remaining tasks, etc.
+- [x] provide a curses mode that displays number of workers, running tasks, remaining tasks, etc. Curses mode is the default.
+- [ ] display ETA in curses mode
 - [ ] curses mode can control (pause/stop/resume) other running executions
 
 

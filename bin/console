@@ -6,6 +6,14 @@ require 'fasten'
 # You can add fixtures and/or initialization code here to make experimenting
 # with your gem easier. You can also use a different console, if you like.
 
+# call reload! for reloading clases in development
+def reload!(base = 'fasten')
+  $LOADED_FEATURES.select { |feature| feature =~ %r{/#{base}/lib/} }.each do |feature|
+    puts "Updating #{feature.gsub(/.*#{base}/, base)}: #{load feature}"
+  end
+  nil
+end
+
 # (If you use this, don't forget to add pry to your Gemfile!)
 require 'pry'
 Pry.start
