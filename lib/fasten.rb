@@ -8,9 +8,11 @@ require 'ostruct'
 require 'curses'
 
 require 'fasten/log_support'
+require 'fasten/stats'
 require 'fasten/task'
 require 'fasten/ui'
 require 'fasten/dag'
+require 'fasten/load_save'
 require 'fasten/executor'
 require 'fasten/worker'
 require 'fasten/version'
@@ -24,22 +26,6 @@ module Fasten
       executor.load(path)
 
       executor
-    end
-  end
-
-  class Executor
-    def load(path)
-      items = YAML.safe_load(File.read(path)).each do |name, params|
-        params.each do |key, val|
-          next unless val.is_a?(String) && (match = %r{^/(.+)/$}.match(val))
-
-          params[key] = Regexp.new(match[1])
-        end
-
-        add Fasten::Task.new({ name: name }.merge(params))
-      end
-
-      log_info "Loaded #{items.count} tasks from #{path}"
     end
   end
 end

@@ -36,7 +36,7 @@ module Fasten
 
       task = running_task
       self.running_task = nil
-      task.state = task.error ? :ERROR : :DONE
+      task.state = task.error ? :FAIL : :DONE
 
       task
     end

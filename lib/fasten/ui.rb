@@ -108,7 +108,7 @@ module Fasten
       when :RUNNING
         attrs = color_pair(1) | A_TOP
         icon = SPINNER_STR[task.worker&.spinner] if icon
-      when :ERROR
+      when :FAIL
         attrs = color_pair(3)
         icon = '✘︎' if icon
       when :DONE
