@@ -32,6 +32,7 @@ module Fasten
 
       FileUtils.mkdir_p File.dirname(path)
       log = File.new path, 'a'
+      log.sync = true
 
       $stdout.reopen log
       $stderr.reopen log

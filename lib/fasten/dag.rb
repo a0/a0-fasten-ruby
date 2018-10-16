@@ -1,6 +1,6 @@
 module Fasten
   module DAG
-    attr_reader :task_list, :task_done_list, :task_error_list, :task_pending_list, :task_running_list
+    attr_reader :task_map, :task_list, :task_done_list, :task_error_list, :task_pending_list, :task_running_list
 
     def initialize_dag
       @task_map = {}
@@ -20,11 +20,13 @@ module Fasten
     end
 
     def update_task(task)
-      if task.error
-        update_error_task task
-      else
+      if task.state == :DONE
         update_done_task task
+      else
+        update_error_task task
       end
+
+      stats_add_entry(self, task.state, task)
     end
 
     def update_done_task(task)
@@ -43,7 +45,7 @@ module Fasten
     end
 
     def next_task
-      task_waiting_list.pop
+      task_waiting_list.sort_by!(&:run_score).pop
     end
 
     def task_waiting_list
@@ -51,6 +53,7 @@ module Fasten
 
       reset_tasks
       setup_tasks_dependencies
+      setup_tasks_scores
       move_pending_to_waiting
     end
 
@@ -72,7 +75,7 @@ module Fasten
       @task_list.each do |task|
         task.dependants = []
         task.depends = []
-        task.level = 0
+        task.run_score = 0
         task.done ? @task_done_list << task : @task_pending_list << task
       end
     end
@@ -86,9 +89,14 @@ module Fasten
           raise "Dependency task '#{after}' not found on task '#{task.name}'." unless after_task
 
           task.depends << after_task
-          task.level += 1
           after_task.dependants << task
         end
+      end
+    end
+
+    def setup_tasks_scores
+      @task_pending_list.each do |task|
+        task.run_score += task.dependants.count
       end
     end
 

@@ -143,14 +143,15 @@ module Fasten
       ui_progressbar(2, col_ini, col_fin, count_done, count_total)
 
       max = 2
-      task_list.each_with_index do |task, index|
+      list = task_list.sort_by(&:run_score)
+      list.each_with_index do |task, index|
         next if 3 + index >= ui_rows
 
         x = ui_task_string(task, 3 + index, 2, icon: true)
         max = x if x > max
       end
 
-      task_list.each_with_index do |task, index|
+      list.each_with_index do |task, index|
         next if 3 + index >= ui_rows || task.depends.nil? || task.depends.empty?
 
         setpos 3 + index, max

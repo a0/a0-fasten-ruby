@@ -30,7 +30,7 @@ module Fasten
     end
 
     def receive
-      updated_task = Marshal.load(parent_read) # rubocop:disable Security/MarshalLoad
+      updated_task = Marshal.load(parent_read) # rubocop:disable Security/MarshalLoad because pipe is a secure channel
 
       %i[ini fin response error].each { |key| running_task[key] = updated_task[key] }
 
@@ -77,7 +77,7 @@ module Fasten
     def process_incoming_tasks
       log_ini self, 'process_incoming_tasks'
 
-      while (object = Marshal.load(child_read)) # rubocop:disable Security/MarshalLoad
+      while (object = Marshal.load(child_read)) # rubocop:disable Security/MarshalLoad because pipe is a secure channel
         run_task(object) if object.is_a? Fasten::Task
       end
 

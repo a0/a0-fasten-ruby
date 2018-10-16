@@ -6,6 +6,8 @@ require 'binding_of_caller'
 require 'logger'
 require 'ostruct'
 require 'curses'
+require 'fileutils'
+require 'csv'
 
 require 'fasten/log_support'
 require 'fasten/stats'

@@ -4,8 +4,10 @@ module Fasten
     include Fasten::DAG
     include Fasten::UI
     include Fasten::LoadSave
+    include Fasten::Stats
 
     def initialize(name: nil, workers: 8, worker_class: Fasten::Worker, fasten_dir: '.fasten')
+      setup_stats(name)
       super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, fasten_dir: fasten_dir
       initialize_dag
 
@@ -17,22 +19,26 @@ module Fasten
     end
 
     def perform
-      log_ini self, running_stats
+      log_ini self, running_counters
       self.state = :RUNNING
+      load_stats
 
       run_ui do
         perform_loop
       end
 
-      self.state = :IDLE
-      log_fin self, running_stats
+      self.state = task_list.map(&:state).all?(:DONE) ? :DONE : :FAIL
+      log_fin self, running_counters
+
+      stats_add_entry(self, state, self)
+      save_stats
     end
 
-    def done_stats
+    def done_counters
       "#{task_done_list.count}/#{task_list.count}"
     end
 
-    def running_stats
+    def running_counters
       "#{task_done_list.count + task_running_list.count}/#{task_list.count}"
     end
 
@@ -69,7 +75,7 @@ module Fasten
 
         update_task task
 
-        log_fin task, done_stats
+        log_fin task, done_counters
       end
     end
 
