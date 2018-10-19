@@ -101,25 +101,39 @@ module Fasten
       end
     end
 
-    def ui_task_string(task, y, x, icon: nil)
-      setpos y, x
-
+    def ui_task_icon(task)
       case task.state
       when :RUNNING
-        attrs = color_pair(1) | A_TOP
-        icon = SPINNER_STR[task.worker&.spinner] if icon
+        SPINNER_STR[task.worker&.spinner]
       when :FAIL
-        attrs = color_pair(3)
-        icon = '✘︎' if icon
+        '✘'
       when :DONE
-        attrs = color_pair(2)
-        icon = '✔︎' if icon
+        '✔'
       else
-        attrs = color_pair(4) | A_DIM
-        icon = '…' if icon
+        '…'
       end
+    end
 
-      str = icon ? "#{icon} #{task}" : task.to_s
+    def ui_task_color(task)
+      case task.state
+      when :RUNNING
+        color_pair(1) | A_TOP
+      when :FAIL
+        color_pair(3) | A_TOP
+      when :DONE
+        color_pair(2) | A_TOP
+      else
+        color_pair(4) | A_TOP
+      end
+    end
+
+    def ui_task_string(task, y, x, icon: nil, str: nil)
+      setpos y, x
+
+      attrs = ui_task_color(task)
+      icon = ui_task_icon(task) if icon
+
+      str ||= icon ? "#{icon} #{task}" : task.to_s
 
       attrset attrs if attrs
       addstr str
@@ -136,9 +150,9 @@ module Fasten
       count_done = task_done_list.count
       count_total = task_list.count
       tl = count_total.to_s.length
-      col_ini = ui_text_aligned(2, :left, format("Tasks: %#{tl}d/%s", count_done, count_total)) + 1
+      col_ini = ui_text_aligned(2, :left, format("Tasks: %#{tl}d/%d", count_done, count_total)) + 1
       col_fin = ui_cols - 5
-      ui_text_aligned(2, :right, "#{(count_done * 100/count_total).to_i}%") if count_total.positive?
+      ui_text_aligned(2, :right, "#{(count_done * 100 / count_total).to_i}%") if count_total.positive?
 
       ui_progressbar(2, col_ini, col_fin, count_done, count_total)
 
@@ -152,13 +166,18 @@ module Fasten
       end
 
       list.each_with_index do |task, index|
-        next if 3 + index >= ui_rows || task.depends.nil? || task.depends.empty?
+        next if 3 + index >= ui_rows
 
-        setpos 3 + index, max
-        x = max + 2
-        addstr ':'
-        task.depends.each do |dependant_task|
-          x = ui_task_string(dependant_task, 3 + index, x) + 1
+        if task.dif
+          setpos 3 + index, max + 2
+          ui_task_string(task, 3 + index, max + 2, str: format('%.2f s', task.dif))
+        elsif task.depends && !task.depends.empty?
+          setpos 3 + index, max
+          x = max + 2
+          addstr ':'
+          task.depends.each do |dependant_task|
+            x = ui_task_string(dependant_task, 3 + index, x) + 1
+          end
         end
       end
     end

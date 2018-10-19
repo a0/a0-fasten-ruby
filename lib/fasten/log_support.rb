@@ -21,9 +21,9 @@ module Fasten
 
     def log_fin(object, message = nil)
       object.fin ||= Time.new
-      diff = object.fin - object.ini
+      object.dif = object.fin - object.ini
 
-      log_info "Done #{object.class} #{object} #{message} in #{diff}"
+      log_info "Done #{object.class} #{object} #{message} in #{object.dif}"
     end
 
     def redirect_std(path)
@@ -47,7 +47,7 @@ end
 
 Fasten.logger ||=
   begin
-    Logger.new(STDOUT, level: Logger::INFO, progname: $PROGRAM_NAME)
+    Logger.new(STDOUT, level: Logger::DEBUG, progname: $PROGRAM_NAME)
   rescue StandardError
     nil
   end

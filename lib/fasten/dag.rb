@@ -26,7 +26,7 @@ module Fasten
         update_error_task task
       end
 
-      stats_add_entry(self, task.state, task)
+      stats_add_entry(task.state, task)
     end
 
     def update_done_task(task)

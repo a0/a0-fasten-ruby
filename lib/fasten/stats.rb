@@ -11,21 +11,43 @@ module Fasten
       }
     end
 
-    def stats_add_entry(object, state, target)
+    def stats_add_entry(state, target)
       return unless target.ini && target.fin
 
       entry = stats_create_entry(state, target)
-      object.stats_data ||= []
-      object.stats_data << entry
+      self.stats_data ||= []
+      self.stats_entries ||= []
+      stats_data << entry
+      stats_entries << entry
 
-      history = stats_history(object, entry)
+      history = stats_history(entry)
 
       update_avg(history, entry)
       update_std(history, entry)
     end
 
-    def stats_history(object, entry)
-      object.stats_data.select { |e| e['state'] == entry['state'] && e['kind'] == entry['kind'] && e['name'] == entry['name'] }
+    FLOAT_FORMATTER = ->(f) { format('%7.3f', f) }
+
+    def stats_table_run
+      sub = stats_entries.select { |x| x['kind'] == 'task' }.map { |x| x['run'] }.sum
+      tot = stats_entries.select { |x| x['kind'] == 'executor' }.map { |x| x['run'] }.sum
+
+      [sub, tot]
+    end
+
+    def stats_table
+      sub, tot = stats_table_run
+
+      Hirb::Console.render_output(stats_entries,
+                                  fields: %w[state kind name run avg std], unicode: true, class: 'Hirb::Helpers::AutoTable',
+                                  filters: { 'run' => FLOAT_FORMATTER, 'avg' => FLOAT_FORMATTER, 'std' => FLOAT_FORMATTER },
+                                  description: false)
+
+      puts format('Tasks total: %.3f s. Executed in: %.3f s. Saved: %.3f s. (%.1f)%% %.0f workers', sub, tot, sub - tot, 100 * (sub - tot) / sub, workers)
+    end
+
+    def stats_history(entry)
+      stats_data.select { |e| e['state'] == entry['state'] && e['kind'] == entry['kind'] && e['name'] == entry['name'] }
     end
 
     def update_avg(history, entry)

@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency 'binding_of_caller'
   spec.add_runtime_dependency 'curses'
+  spec.add_runtime_dependency 'hirb'
 
   raise 'RubyGems 2.0 or newer is required to protect against public gem pushes.' unless spec.respond_to?(:metadata)
 

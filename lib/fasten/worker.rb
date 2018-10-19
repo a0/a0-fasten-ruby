@@ -1,4 +1,12 @@
 module Fasten
+  class WorkerError < StandardError
+    attr_reader :backtrace
+    def initialize(origin)
+      super "#{origin.class} #{origin.message}"
+      @backtrace = origin.backtrace
+    end
+  end
+
   class Worker < Task
     include Fasten::LogSupport
 
@@ -7,7 +15,18 @@ module Fasten
     end
 
     def perform(task)
-      system task.shell if task.shell
+      perform_shell(task) if task.shell
+      perform_ruby(task) if task.ruby
+    end
+
+    def perform_ruby(task)
+      eval task.ruby # rubocop:disable Security/Eval we trust our users ;-)
+    end
+
+    def perform_shell(task)
+      result = system task.shell
+
+      raise "Command failed with exit code: #{$CHILD_STATUS.exitstatus}" unless result
     end
 
     def fork
@@ -104,10 +123,21 @@ module Fasten
       perform(task)
 
       log_fin task, 'perform'
-      Marshal.dump(task, child_write)
+      send_response(task)
     rescue StandardError => error
-      task.error = error
-      Marshal.dump(task, child_write)
+      task.error = WorkerError.new(error)
+      send_response(task)
+    end
+
+    def send_response(task)
+      log_info "Sending task response back to executor #{task}"
+      begin
+        data = Marshal.dump(task)
+      rescue StandardError
+        task.error = RuntimeError.new(task.error.message + "\n#{task.error.backtrace&.join("\n")}")
+        data = Marshal.dump(task)
+      end
+      child_write.write(data)
     end
   end
 end

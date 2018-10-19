@@ -30,7 +30,7 @@ module Fasten
       self.state = task_list.map(&:state).all?(:DONE) ? :DONE : :FAIL
       log_fin self, running_counters
 
-      stats_add_entry(self, state, self)
+      stats_add_entry(state, self)
       save_stats
     end
 
@@ -81,6 +81,10 @@ module Fasten
 
     def raise_error_in_failure
       return unless tasks_failed?
+
+      task_error_list.each do |task|
+        log_info "task: #{task} error:#{task.error}\n#{task.error&.backtrace&.join("\n")}"
+      end
 
       remove_all_workers
 

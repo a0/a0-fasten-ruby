@@ -8,6 +8,7 @@ require 'ostruct'
 require 'curses'
 require 'fileutils'
 require 'csv'
+require 'hirb'
 
 require 'fasten/log_support'
 require 'fasten/stats'

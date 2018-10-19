@@ -4,13 +4,17 @@ module Fasten
 
     def load(path)
       items = YAML.safe_load(File.read(path)).each do |name, params|
-        params.each do |key, val|
-          next unless val.is_a?(String) && (match = %r{^/(.+)/$}.match(val))
+        if params.is_a? String
+          params = { after: params }
+        else
+          params&.each do |key, val|
+            next unless val.is_a?(String) && (match = %r{^/(.+)/$}.match(val))
 
-          params[key] = Regexp.new(match[1])
+            params[key] = Regexp.new(match[1])
+          end
         end
 
-        add Fasten::Task.new({ name: name }.merge(params))
+        add Fasten::Task.new({ name: name }.merge(params || {}))
       end
 
       log_info "Loaded #{items.count} tasks from #{path}"
