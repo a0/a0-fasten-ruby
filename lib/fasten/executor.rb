@@ -69,7 +69,7 @@ module Fasten
     def receive_workers_tasks(reads)
       reads&.each do |read|
         worker = worker_list.find { |item| item.parent_read == read }
-        task = worker.receive
+        task = worker.receive_response
 
         task_running_list.delete task
 
@@ -88,9 +88,7 @@ module Fasten
 
       remove_all_workers
 
-      count = task_error_list.count
-
-      raise "Stopping because the following #{count} #{count == 1 ? 'task' : 'tasks'} failed: #{task_error_list.map(&:to_s).join(', ')}"
+      raise "Stopping because the following tasks failed: #{task_error_list.map(&:to_s).join(', ')}"
     end
 
     def remove_workers_as_needed
@@ -123,15 +121,14 @@ module Fasten
 
         task = next_task
         log_ini task, "on worker #{worker}"
-        worker.dispatch(task)
+        worker.send_request(task)
         task_running_list << task
       end
     end
 
     def remove_all_workers
-      while (worker = worker_list.pop)
-        worker.kill
-      end
+      worker_list.each(&:kill)
+      worker_list.clear
     end
   end
 end

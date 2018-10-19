@@ -35,20 +35,20 @@ module Fasten
       self.pid = Process.fork do
         close_parent_pipes
 
-        process_incoming_tasks
+        process_incoming_requests
       end
 
       close_child_pipes
     end
 
-    def dispatch(task)
+    def send_request(task)
       Marshal.dump(Task.new(task.to_h.merge(depends: nil, dependants: nil)), parent_write)
       self.running_task = task
       task.worker = self
       task.state = :RUNNING
     end
 
-    def receive
+    def receive_response
       updated_task = Marshal.load(parent_read) # rubocop:disable Security/MarshalLoad because pipe is a secure channel
 
       %i[ini fin response error].each { |key| running_task[key] = updated_task[key] }
@@ -93,14 +93,14 @@ module Fasten
       child_write.close unless child_write.closed?
     end
 
-    def process_incoming_tasks
-      log_ini self, 'process_incoming_tasks'
+    def process_incoming_requests
+      log_ini self, 'process_incoming_requests'
 
       while (object = Marshal.load(child_read)) # rubocop:disable Security/MarshalLoad because pipe is a secure channel
         run_task(object) if object.is_a? Fasten::Task
       end
 
-      log_fin self, 'process_incoming_tasks'
+      log_fin self, 'process_incoming_requests'
     rescue EOFError
       log_info 'Terminating on EOF'
     end
