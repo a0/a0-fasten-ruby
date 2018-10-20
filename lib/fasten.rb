@@ -30,5 +30,19 @@ module Fasten
 
       executor
     end
+
+    def map(list, **options, &block)
+      executor = Fasten::Executor.new(**options)
+      executor.block = block
+
+      list.each do |item|
+        executor.add Fasten::Task.new name: item.to_s, request: item
+      end
+
+      executor.perform
+      executor.stats_table
+
+      executor.task_list.map(&:response)
+    end
   end
 end

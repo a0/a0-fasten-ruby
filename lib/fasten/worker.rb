@@ -17,16 +17,21 @@ module Fasten
     def perform(task)
       perform_shell(task) if task.shell
       perform_ruby(task) if task.ruby
+      perform_block(task) if block
     end
 
     def perform_ruby(task)
-      eval task.ruby # rubocop:disable Security/Eval we trust our users ;-)
+      task.response = eval task.ruby # rubocop:disable Security/Eval we trust our users ;-)
     end
 
     def perform_shell(task)
       result = system task.shell
 
       raise "Command failed with exit code: #{$CHILD_STATUS.exitstatus}" unless result
+    end
+
+    def perform_block(task)
+      task.response = block.call(task.request)
     end
 
     def fork
