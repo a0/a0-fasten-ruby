@@ -23,6 +23,8 @@ module Fasten
       init_screen
       self.ui_rows = lines
       self.ui_cols = cols
+      stdscr.keypad = true
+      stdscr.nodelay = true
       ui_setup_color
       noecho
       cbreak
@@ -59,15 +61,42 @@ module Fasten
       ui_text_aligned(0, :left, 'Fasten your seatbelts!')
       ui_text_aligned(0, :center, name.to_s)
       ui_text_aligned(0, :right, Time.new.to_s)
+      ui_text_aligned(1, :right, ui_message) if ui_message
     end
 
     def ui_update
-      clear
+      ui_keyboard
+      clear if ui_clear_needed
       ui_title
       ui_workers
       ui_tasks
 
       refresh
+      self.ui_clear_needed = false
+    end
+
+    def ui_keyboard
+      return unless (key = stdscr.getch)
+
+      if key == 'w'
+        if workers <= 1
+          self.ui_message = "Can't remove 1 worker left, press [P] to pause"
+        else
+          self.workers -= 1
+          self.ui_message = "Decreasing max workers to #{workers}"
+        end
+      elsif key == 'W'
+        self.workers += 1
+        self.ui_message = "Increasing max workers to #{workers}"
+      elsif key == 'q'
+        self.ui_message = 'Quitting…'
+        task_pending_list.clear
+        task_waiting_list.clear
+      elsif key == 'p'
+        self.ui_message = 'Pausing…'
+      end
+
+      self.ui_clear_needed = true
     end
 
     def ui_workers_summary

@@ -59,7 +59,7 @@ module Fasten
       while (no_waiting_tasks? && tasks_running?) || task_running_list.count >= workers || (tasks_running? && tasks_failed?)
         ui_update
         reads = worker_list.map(&:parent_read)
-        reads, _writes, _errors = IO.select(reads, [], [], 0.2)
+        reads, _writes, _errors = IO.select(reads, [], [], 1)
 
         receive_workers_tasks(reads)
       end
@@ -68,7 +68,8 @@ module Fasten
 
     def receive_workers_tasks(reads)
       reads&.each do |read|
-        worker = worker_list.find { |item| item.parent_read == read }
+        next unless (worker = worker_list.find { |item| item.parent_read == read })
+
         task = worker.receive_response
 
         task_running_list.delete task
@@ -76,6 +77,7 @@ module Fasten
         update_task task
 
         log_fin task, done_counters
+        self.ui_clear_needed = true
       end
     end
 
@@ -97,6 +99,8 @@ module Fasten
 
         worker.kill
         worker_list.delete worker
+
+        self.ui_clear_needed = true
       end
     end
 
@@ -106,10 +110,13 @@ module Fasten
       unless worker
         @worker_id = (@worker_id || 0) + 1
         worker = worker_class.new executor: self, name: "#{worker_class} #{format '%02X', @worker_id}"
+        worker.block = block if block
         worker.fork
         worker_list << worker
 
         log_info "Worker created: #{worker}"
+
+        self.ui_clear_needed = true
       end
 
       worker
@@ -123,12 +130,16 @@ module Fasten
         log_ini task, "on worker #{worker}"
         worker.send_request(task)
         task_running_list << task
+
+        self.ui_clear_needed = true
       end
     end
 
     def remove_all_workers
       worker_list.each(&:kill)
       worker_list.clear
+
+      self.ui_clear_needed = true
     end
   end
 end
