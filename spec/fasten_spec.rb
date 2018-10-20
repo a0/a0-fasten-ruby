@@ -6,6 +6,7 @@ RSpec.describe Fasten do
   it 'performs an empty executor' do |ex|
     f = Fasten::Executor.new name: ex.description
     f.perform
+    f.stats_table
   end
 
   it 'performs 500 tasks with 100 workers, without dependencies' do |ex|
@@ -15,6 +16,7 @@ RSpec.describe Fasten do
       f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.2; touch #{index}.testfile")
     end
     f.perform
+    f.stats_table
 
     files = Dir['*.testfile']
     items = f.task_list.map { |item| "#{item}.testfile" }
@@ -48,6 +50,7 @@ RSpec.describe Fasten do
       f.add Fasten::Task.new(name: item[:task], after: item[:after], shell: item[:shell])
     end
     f.perform
+    f.stats_table
 
     files = Dir['*.testfile']
     items = f.task_list.map { |item| "#{item}.testfile" }

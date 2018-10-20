@@ -7,5 +7,6 @@ RSpec.describe Fasten do
     end
 
     f.perform
+    f.stats_table
   end
 end

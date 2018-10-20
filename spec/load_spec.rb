@@ -7,6 +7,7 @@ RSpec.describe Fasten do
     `rm -f *.testfile`
     f = Fasten.load('spec/yaml_spec.yml', name: ex.description)
     f.perform
+    f.stats_table
 
     files = Dir['*.testfile']
     items = f.task_list.map { |item| "#{item}.testfile" }

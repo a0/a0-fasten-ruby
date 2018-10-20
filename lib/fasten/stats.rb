@@ -35,6 +35,28 @@ module Fasten
       [sub, tot]
     end
 
+    def split_time(time)
+      sign = time.negative? ? '-' : ''
+      time = -time if time.negative?
+
+      hours, seconds = time.divmod(3600)
+      minutes, seconds = seconds.divmod(60)
+      seconds, decimal = seconds.divmod(1)
+      milliseconds, _ignored = (decimal.round(4) * 1000).divmod(1)
+
+      [sign, hours, minutes, seconds, milliseconds, decimal]
+    end
+
+    def hformat(time, total = nil)
+      sign, hours, minutes, seconds, milliseconds, decimal = split_time time
+
+      str = hours.zero? ? format('%.1s%02d:%02d', sign, minutes, seconds) : format('%.1s%02d:%02d:%02d', sign, hours, minutes, seconds)
+      str += ".#{milliseconds}" if decimal != 0
+      str += format(' (%.1f%%)', 100.0 * time / total) if total
+
+      str
+    end
+
     def stats_table
       sub, tot = stats_table_run
 
@@ -43,7 +65,8 @@ module Fasten
                                   filters: { 'run' => FLOAT_FORMATTER, 'avg' => FLOAT_FORMATTER, 'std' => FLOAT_FORMATTER },
                                   description: false)
 
-      puts format('Tasks total: %.3f s. Executed in: %.3f s. Saved: %.3f s. (%.1f)%% %.0f workers', sub, tot, sub - tot, 100 * (sub - tot) / sub, workers)
+      puts format('∑tasks: %<task>s ∑executed: %<executed>s saved: %<saved>s workers: %<workers>s',
+                  task: hformat(sub), executed: hformat(tot, sub), saved: hformat(sub - tot, sub), workers: workers.to_s)
     end
 
     def stats_history(entry)
