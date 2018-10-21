@@ -63,7 +63,7 @@ module Fasten
 
       Hirb::Console.render_output(stats_entries,
                                   fields: %w[state kind name run cnt avg std], unicode: true, class: 'Hirb::Helpers::AutoTable',
-                                  filters: { 'run' => FLOAT_FORMATTER, 'cnt' => FLOAT_FORMATTER, 'avg' => FLOAT_FORMATTER, 'std' => FLOAT_FORMATTER },
+                                  filters: { 'run' => FLOAT_FORMATTER, 'avg' => FLOAT_FORMATTER, 'std' => FLOAT_FORMATTER },
                                   description: false)
 
       puts format('∑tasks: %<task>s ∑executed: %<executed>s saved: %<saved>s workers: %<workers>s',

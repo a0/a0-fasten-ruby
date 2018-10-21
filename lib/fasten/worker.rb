@@ -8,7 +8,7 @@ module Fasten
   end
 
   class Worker < Task
-    include Fasten::LogSupport
+    include Fasten::Logger
 
     def initialize(executor:, name: nil)
       super executor: executor, name: name, spinner: 0

@@ -10,7 +10,7 @@ require 'fileutils'
 require 'csv'
 require 'hirb'
 
-require 'fasten/log_support'
+require 'fasten/logger'
 require 'fasten/stats'
 require 'fasten/task'
 require 'fasten/ui'
@@ -22,7 +22,7 @@ require 'fasten/version'
 
 module Fasten
   class << self
-    include Fasten::LogSupport
+    include Fasten::Logger
 
     def load(path, **options)
       executor = Fasten::Executor.new(**options)

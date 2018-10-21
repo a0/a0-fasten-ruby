@@ -3,7 +3,7 @@ module Fasten
     attr_accessor :logger
   end
 
-  module LogSupport
+  module Logger
     %w[debug info error].each do |method|
       define_method "log_#{method}" do |msg|
         return unless Fasten.logger.respond_to?(method)

@@ -1,6 +1,6 @@
 module Fasten
   class Executor < Task
-    include Fasten::LogSupport
+    include Fasten::Logger
     include Fasten::DAG
     include Fasten::UI
     include Fasten::LoadSave

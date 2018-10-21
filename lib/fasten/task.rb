@@ -1,6 +1,6 @@
 module Fasten
   class Task < OpenStruct
-    include Fasten::LogSupport
+    include Fasten::Logger
 
     def to_s
       name
