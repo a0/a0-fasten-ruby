@@ -47,16 +47,35 @@ module Fasten
         wait_for_running_tasks
         raise_error_in_failure
         remove_workers_as_needed
-        dispatch_pending_tasks
+        if %i[PAUSING PAUSED QUITTING].include?(state)
+          check_state
+        else
+          dispatch_pending_tasks
+        end
 
-        break if no_running_tasks? && no_waiting_tasks?
+        break if no_running_tasks? && no_waiting_tasks? || state == :QUIT
       end
 
       remove_all_workers
     end
 
+    def check_state
+      if state == :PAUSING && no_running_tasks?
+        self.state = :PAUSED
+        self.ui_message = nil
+        self.ui_clear_needed = true
+      elsif state == :QUITTING && no_running_tasks?
+        self.state = :QUIT
+        self.ui_clear_needed = true
+      end
+    end
+
+    def should_wait_for_running_tasks?
+      tasks_running? && (no_waiting_tasks? || tasks_failed? || %i[PAUSING QUITTING].include?(state)) || task_running_list.count >= workers
+    end
+
     def wait_for_running_tasks
-      while (no_waiting_tasks? && tasks_running?) || task_running_list.count >= workers || (tasks_running? && tasks_failed?)
+      while should_wait_for_running_tasks?
         ui_update
         reads = worker_list.map(&:parent_read)
         reads, _writes, _errors = IO.select(reads, [], [], 1)

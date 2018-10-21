@@ -61,7 +61,6 @@ module Fasten
       ui_text_aligned(0, :left, 'Fasten your seatbelts!')
       ui_text_aligned(0, :center, name.to_s)
       ui_text_aligned(0, :right, Time.new.to_s)
-      ui_text_aligned(1, :right, ui_message) if ui_message
     end
 
     def ui_update
@@ -78,6 +77,8 @@ module Fasten
     def ui_keyboard
       return unless (key = stdscr.getch)
 
+      self.ui_message = nil
+
       if key == 'w'
         if workers <= 1
           self.ui_message = "Can't remove 1 worker left, press [P] to pause"
@@ -89,18 +90,20 @@ module Fasten
         self.workers += 1
         self.ui_message = "Increasing max workers to #{workers}"
       elsif key == 'q'
-        self.ui_message = 'Quitting…'
-        task_pending_list.clear
-        task_waiting_list.clear
+        self.ui_message = 'Will quit when running tasks end'
+        self.state = :QUITTING
       elsif key == 'p'
-        self.ui_message = 'Pausing…'
+        self.ui_message = 'Will pause when running tasks end'
+        self.state = :PAUSING
+      elsif key == 'r'
+        self.state = :RUNNING
       end
 
       self.ui_clear_needed = true
     end
 
     def ui_workers_summary
-      "Procs: #{task_running_list.count} run #{worker_list.count - task_running_list.count} idle #{workers} max"
+      "Procs: #{task_running_list.count} run #{worker_list.count - task_running_list.count} idle #{workers} max #{task_waiting_list.count} wait"
     end
 
     def ui_workers
@@ -113,6 +116,26 @@ module Fasten
         addstr worker.running? ? 'R' : '_'
         attroff attrs
       end
+
+      ui_state
+    end
+
+    def ui_state
+      if state == :RUNNING
+        attrs = color_pair(2)
+      elsif state == :PAUSING
+        attrs = color_pair(1) | A_BLINK | A_STANDOUT
+      elsif state == :PAUSED
+        attrs = color_pair(1) | A_STANDOUT
+      elsif state == :QUITTING
+        attrs = color_pair(3) | A_BLINK | A_STANDOUT
+      end
+
+      l = ui_text_aligned(1, :right, state.to_s, attrs)
+      return unless ui_message
+
+      setpos 1, ui_cols - l - ui_message.length - 1
+      addstr ui_message
     end
 
     def ui_progressbar(row, col_ini, col_fin, count, total)
