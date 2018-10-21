@@ -22,6 +22,7 @@ module Fasten
 
       history = stats_history(entry)
 
+      update_cnt(history, entry)
       update_avg(history, entry)
       update_std(history, entry)
     end
@@ -61,8 +62,8 @@ module Fasten
       sub, tot = stats_table_run
 
       Hirb::Console.render_output(stats_entries,
-                                  fields: %w[state kind name run avg std], unicode: true, class: 'Hirb::Helpers::AutoTable',
-                                  filters: { 'run' => FLOAT_FORMATTER, 'avg' => FLOAT_FORMATTER, 'std' => FLOAT_FORMATTER },
+                                  fields: %w[state kind name run cnt avg std], unicode: true, class: 'Hirb::Helpers::AutoTable',
+                                  filters: { 'run' => FLOAT_FORMATTER, 'cnt' => FLOAT_FORMATTER, 'avg' => FLOAT_FORMATTER, 'std' => FLOAT_FORMATTER },
                                   description: false)
 
       puts format('∑tasks: %<task>s ∑executed: %<executed>s saved: %<saved>s workers: %<workers>s',
@@ -71,6 +72,10 @@ module Fasten
 
     def stats_history(entry)
       stats_data.select { |e| e['state'] == entry['state'] && e['kind'] == entry['kind'] && e['name'] == entry['name'] }
+    end
+
+    def update_cnt(history, entry)
+      entry['cnt'] = history.size
     end
 
     def update_avg(history, entry)
