@@ -5,6 +5,7 @@ PATH
       binding_of_caller
       curses
       hirb
+      parallel
 
 GEM
   remote: https://rubygems.org/

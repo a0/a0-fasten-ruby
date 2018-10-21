@@ -6,7 +6,7 @@ module Fasten
     include Fasten::LoadSave
     include Fasten::Stats
 
-    def initialize(name: nil, workers: 8, worker_class: Fasten::Worker, fasten_dir: '.fasten')
+    def initialize(name: nil, workers: Parallel.physical_processor_count, worker_class: Fasten::Worker, fasten_dir: '.fasten')
       setup_stats(name)
       super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, fasten_dir: fasten_dir
       initialize_dag
