@@ -9,6 +9,7 @@ require 'curses'
 require 'fileutils'
 require 'csv'
 require 'hirb'
+require 'parallel'
 
 require 'fasten/logger'
 require 'fasten/stats'
