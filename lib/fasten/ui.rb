@@ -79,14 +79,14 @@ module Fasten
 
       self.ui_message = nil
 
-      if key == 'w'
+      if key == Curses::Key::LEFT
         if workers <= 1
           self.ui_message = "Can't remove 1 worker left, press [P] to pause"
         else
           self.workers -= 1
           self.ui_message = "Decreasing max workers to #{workers}"
         end
-      elsif key == 'W'
+      elsif key == Curses::Key::RIGHT
         self.workers += 1
         self.ui_message = "Increasing max workers to #{workers}"
       elsif key == 'q'
