@@ -6,9 +6,9 @@ module Fasten
     include Fasten::LoadSave
     include Fasten::Stats
 
-    def initialize(name: nil, workers: Parallel.physical_processor_count, worker_class: Fasten::Worker, fasten_dir: '.fasten')
+    def initialize(name: nil, developer: true, workers: Parallel.physical_processor_count, worker_class: Fasten::Worker, fasten_dir: '.fasten')
       setup_stats(name)
-      super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, fasten_dir: fasten_dir
+      super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, fasten_dir: fasten_dir, developer: developer
       initialize_dag
 
       self.worker_list = []
@@ -107,9 +107,19 @@ module Fasten
         log_info "task: #{task} error:#{task.error}\n#{task.error&.backtrace&.join("\n")}"
       end
 
-      remove_all_workers
+      if developer
+        close_screen
+        puts "Stopping because the following tasks failed:\n"
+        task_error_list.map(&:to_s).each { |x| puts "  #{x}" }
 
-      raise "Stopping because the following tasks failed: #{task_error_list.map(&:to_s).join(', ')}"
+        puts 'Entering development console'
+
+        Kernel.binding.pry # rubocop:disable Lint/Debugger
+      else
+        remove_all_workers
+
+        raise "Stopping because the following tasks failed: #{task_error_list.map(&:to_s).join(', ')}"
+      end
     end
 
     def remove_workers_as_needed
