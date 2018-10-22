@@ -126,11 +126,10 @@ module Fasten
       log_ini task, 'perform'
 
       perform(task)
-
-      log_fin task, 'perform'
-      send_response(task)
     rescue StandardError => error
       task.error = WorkerError.new(error)
+    ensure
+      log_fin task, 'perform'
       send_response(task)
     end
 
