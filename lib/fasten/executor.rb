@@ -6,7 +6,7 @@ module Fasten
     include Fasten::LoadSave
     include Fasten::Stats
 
-    def initialize(name: nil, developer: true, workers: Parallel.physical_processor_count, worker_class: Fasten::Worker, fasten_dir: '.fasten')
+    def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Fasten::Worker, fasten_dir: '.fasten')
       setup_stats(name)
       super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, fasten_dir: fasten_dir, developer: developer
       initialize_dag
@@ -62,11 +62,11 @@ module Fasten
     def check_state
       if state == :PAUSING && no_running_tasks?
         self.state = :PAUSED
-        self.ui_message = nil
-        self.ui_clear_needed = true
+        self.ui.message = nil
+        ui.force_clear
       elsif state == :QUITTING && no_running_tasks?
         self.state = :QUIT
-        self.ui_clear_needed = true
+        ui.force_clear
       end
     end
 
@@ -76,13 +76,14 @@ module Fasten
 
     def wait_for_running_tasks
       while should_wait_for_running_tasks?
-        ui_update
+        ui.update
         reads = worker_list.map(&:parent_read)
         reads, _writes, _errors = IO.select(reads, [], [], 1)
 
         receive_workers_tasks(reads)
       end
-      ui_update
+
+      ui.update
     end
 
     def receive_workers_tasks(reads)
@@ -96,7 +97,7 @@ module Fasten
         update_task task
 
         log_fin task, done_counters
-        self.ui_clear_needed = true
+        ui.force_clear
       end
     end
 
@@ -108,7 +109,7 @@ module Fasten
       end
 
       if developer
-        close_screen
+        ui.cleanup
         puts "Stopping because the following tasks failed:\n"
         task_error_list.map(&:to_s).each { |x| puts "  #{x}" }
 
@@ -129,7 +130,7 @@ module Fasten
         worker.kill
         worker_list.delete worker
 
-        self.ui_clear_needed = true
+        ui.force_clear
       end
     end
 
@@ -145,7 +146,7 @@ module Fasten
 
         log_info "Worker created: #{worker}"
 
-        self.ui_clear_needed = true
+        ui.force_clear
       end
 
       worker
@@ -160,7 +161,7 @@ module Fasten
         worker.send_request(task)
         task_running_list << task
 
-        self.ui_clear_needed = true
+        ui.force_clear
       end
     end
 
@@ -168,7 +169,7 @@ module Fasten
       worker_list.each(&:kill)
       worker_list.clear
 
-      self.ui_clear_needed = true
+      ui.force_clear
     end
   end
 end
