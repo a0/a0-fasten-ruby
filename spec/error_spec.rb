@@ -16,7 +16,7 @@ RSpec.describe Fasten do
   it 'early stop in case of failure' do |ex|
     `rm -f *.testfile`
 
-    f = Fasten::Executor.new name: ex.description, workers: 1, worker_class: ErrorWorker
+    f = Fasten::Executor.new name: ex.description, workers: 1, worker_class: ErrorWorker, developer: false
 
     100.times do |index|
       f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.05; touch #{index}.testfile")
@@ -32,7 +32,7 @@ RSpec.describe Fasten do
   it 'it should wait other tasks end in case of failure' do |ex|
     `rm -f *.testfile`
 
-    f = Fasten::Executor.new name: ex.description, workers: 10, worker_class: ErrorWorker
+    f = Fasten::Executor.new name: ex.description, workers: 10, worker_class: ErrorWorker, developer: false
 
     100.times do |index|
       f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.1; touch #{index}.testfile")
