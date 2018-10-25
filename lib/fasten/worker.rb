@@ -1,6 +1,7 @@
 module Fasten
   class WorkerError < StandardError
     attr_reader :backtrace
+
     def initialize(origin)
       super "#{origin.class} #{origin.message}"
       @backtrace = origin.backtrace
@@ -135,12 +136,7 @@ module Fasten
 
     def send_response(task)
       log_info "Sending task response back to executor #{task}"
-      begin
-        data = Marshal.dump(task)
-      rescue StandardError
-        task.error = RuntimeError.new(task.error.message + "\n#{task.error.backtrace&.join("\n")}")
-        data = Marshal.dump(task)
-      end
+      data = Marshal.dump(task)
       child_write.write(data)
     end
   end

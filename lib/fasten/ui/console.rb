@@ -5,7 +5,7 @@ module Fasten
     class Console
       extend Forwardable
       def_delegators :executor, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
-      def_delegators :executor, :name, :workers, :workers=, :state, :state=
+      def_delegators :executor, :name, :workers, :workers=, :state, :state=, :hformat
 
       attr_accessor :executor
 
@@ -32,8 +32,8 @@ module Fasten
 
       def update
         setup unless @setup_done
-        display_task_message(task_done_list, :task_done_list, 'Done  in')
-        display_task_message(task_error_list, :task_error_list, 'Error in')
+        display_task_message(task_done_list, @old[:task_done_list], 'Done in')
+        display_task_message(task_error_list, @old[:task_error_list], 'Fail in')
       end
 
       def cleanup
@@ -45,13 +45,12 @@ module Fasten
 
       protected
 
-      def display_task_message(orig, name, message)
-        old = @old[name]
+      def display_task_message(orig, old, message)
         return unless old.count != orig.count
 
         (orig - old).each do |task|
-          puts "Time: #{executor.hformat Time.new - executor.ini} #{message} #{executor.hformat task.dif} Task #{task} #{task.dif}"
-          @old[name] << task
+          puts "Time: #{hformat Time.new - executor.ini} #{message} #{hformat task.dif} Task #{task}"
+          old << task
         end
       end
     end
