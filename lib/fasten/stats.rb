@@ -45,14 +45,13 @@ module Fasten
       seconds, decimal = seconds.divmod(1)
       milliseconds, _ignored = (decimal.round(4) * 1000).divmod(1)
 
-      [sign, hours, minutes, seconds, milliseconds, decimal]
+      [sign, hours, minutes, seconds, milliseconds]
     end
 
     def hformat(time, total = nil)
-      sign, hours, minutes, seconds, milliseconds, decimal = split_time time
+      sign, hours, minutes, seconds, milliseconds = split_time time
 
-      str = hours.zero? ? format('%.1s%02d:%02d', sign, minutes, seconds) : format('%.1s%02d:%02d:%02d', sign, hours, minutes, seconds)
-      str += ".#{milliseconds}" if decimal != 0
+      str = hours.zero? ? format('%.1s%02d:%02d.%03d', sign, minutes, seconds, milliseconds) : format('%.1s%02d:%02d:%02d.%03d', sign, hours, minutes, seconds, milliseconds)
       str += format(' (%.1f%%)', 100.0 * time / total) if total
 
       str
