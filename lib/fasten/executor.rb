@@ -139,7 +139,7 @@ module Fasten
 
       unless worker
         @worker_id = (@worker_id || 0) + 1
-        worker = worker_class.new executor: self, name: "#{worker_class} #{format '%02X', @worker_id}"
+        worker = worker_class.new executor: self, name: "#{worker_class}-#{format '%02X', @worker_id}"
         worker.block = block if block
         worker.fork
         worker_list << worker
