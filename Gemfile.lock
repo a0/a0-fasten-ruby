@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    fasten (0.5.0)
+    fasten (0.5.2)
       binding_of_caller
       curses
       hirb
