@@ -4,6 +4,7 @@ module Fasten
   module UI
     class Console
       extend Forwardable
+
       def_delegators :executor, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
       def_delegators :executor, :name, :workers, :workers=, :state, :state=, :hformat
 

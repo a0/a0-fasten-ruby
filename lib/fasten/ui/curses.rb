@@ -7,6 +7,7 @@ module Fasten
     class Curses
       include ::Curses
       extend Forwardable
+
       def_delegators :executor, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
       def_delegators :executor, :name, :workers, :workers=, :state, :state=
 
@@ -161,7 +162,7 @@ module Fasten
         col_ini.upto col_fin do |col|
           setpos row, col
           count -= slice
-          if count.positive?
+          if count >= 0
             addstr PROGRESSBAR_STR[-1]
           elsif count > -slice
             addstr PROGRESSBAR_STR[(count * PROGRESSBAR_LEN / slice) % PROGRESSBAR_LEN]
@@ -173,7 +174,7 @@ module Fasten
 
       def ui_task_icon(task)
         case task.state
-        when :RUNNING
+        when :RUNN
           SPINNER_STR[task.worker&.spinner]
         when :FAIL
           '✘'
@@ -186,7 +187,7 @@ module Fasten
 
       def ui_task_color(task)
         case task.state
-        when :RUNNING
+        when :RUNN
           color_pair(1) | A_TOP
         when :FAIL
           color_pair(3) | A_TOP
@@ -227,7 +228,7 @@ module Fasten
         ui_progressbar(2, col_ini, col_fin, count_done, count_total)
 
         max = 2
-        list = task_list.sort_by(&:run_score)
+        list = task_list.sort_by.with_index { |x, index| [x.run_score, index] }
         list.each_with_index do |task, index|
           next if 3 + index >= n_rows
 

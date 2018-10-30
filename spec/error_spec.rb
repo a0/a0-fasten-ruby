@@ -1,12 +1,12 @@
 class ErrorWorker < Fasten::Worker
   def initialize(*)
     super
-    self.fail_at ||= ENV['FAILT_AT'] || 10
+    @fail_at ||= ENV['FAILT_AT'] || 10
   end
 
   def perform(task)
     @count = (@count || 0) + 1
-    raise "Simulating Error, counter: #{@count}" if (@count % fail_at).zero?
+    raise "Simulating Error, counter: #{@count}" if (@count % @fail_at).zero?
 
     super
   end
@@ -19,7 +19,7 @@ RSpec.describe Fasten do
     f = Fasten::Executor.new name: ex.description, workers: 1, worker_class: ErrorWorker, developer: false
 
     100.times do |index|
-      f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.05; touch #{index}.testfile")
+      f.add Fasten::Task.new name: index.to_s, shell: "sleep 0.05; touch #{index}.testfile"
     end
     expect { f.perform }.to raise_error(StandardError)
 
@@ -35,7 +35,7 @@ RSpec.describe Fasten do
     f = Fasten::Executor.new name: ex.description, workers: 10, worker_class: ErrorWorker, developer: false
 
     100.times do |index|
-      f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.1; touch #{index}.testfile")
+      f.add Fasten::Task.new name: index.to_s, shell: "sleep 0.1; touch #{index}.testfile"
     end
     expect { f.perform }.to raise_error(StandardError)
 

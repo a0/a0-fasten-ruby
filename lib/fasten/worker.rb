@@ -8,11 +8,16 @@ module Fasten
     end
   end
 
-  class Worker < Task
+  class Worker
     include Fasten::Logger
+    include Fasten::State
+
+    attr_accessor :executor, :name, :spinner, :child_read, :child_write, :parent_read, :parent_write, :pid, :block, :running_task
 
     def initialize(executor:, name: nil)
-      super executor: executor, name: name, spinner: 0
+      self.executor = executor
+      self.name = name
+      self.spinner = 0
     end
 
     def perform(task)
@@ -48,20 +53,19 @@ module Fasten
     end
 
     def send_request(task)
-      Marshal.dump(Task.new(task.to_h.merge(depends: nil, dependants: nil)), parent_write)
-      self.running_task = task
+      task.state = :RUNN
       task.worker = self
-      task.state = :RUNNING
+      self.running_task = task
+      Marshal.dump(task, parent_write)
     end
 
     def receive_response
       updated_task = Marshal.load(parent_read) # rubocop:disable Security/MarshalLoad because pipe is a secure channel
 
-      %i[ini fin response error].each { |key| running_task[key] = updated_task[key] }
+      %i[state ini fin dif response error].each { |key| running_task.send "#{key}=", updated_task.send(key) }
 
       task = running_task
       self.running_task = nil
-      task.state = task.error ? :FAIL : :DONE
 
       task
     end
@@ -127,7 +131,9 @@ module Fasten
       log_ini task, 'perform'
 
       perform(task)
+      task.state = :DONE
     rescue StandardError => error
+      task.state = :FAIL
       task.error = WorkerError.new(error)
     ensure
       log_fin task, 'perform'

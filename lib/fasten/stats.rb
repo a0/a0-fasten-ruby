@@ -1,13 +1,24 @@
 module Fasten
   module Stats
+    attr_accessor :stats_data, :stats_entries
+
+    def initialize_stats
+      return unless stats
+
+      @stats_path = "#{ENV['HOME']}/.fasten/stats/#{name}.csv" if ENV['HOME']
+      FileUtils.mkdir_p File.dirname(@stats_path)
+    rescue StandardError
+      @stats_path = nil
+    end
+
     def stats_create_entry(state, target)
       {
         'state' => state.to_s,
-        'kind' => target.is_a?(Fasten::Executor) ? 'executor' : 'task',
-        'name' => target.name,
-        'ini' => target.ini.to_f,
-        'fin' => target.fin.to_f,
-        'run' => target.fin - target.ini
+        'kind'  => target.is_a?(Fasten::Executor) ? 'executor' : 'task',
+        'name'  => target.name,
+        'ini'   => target.ini.to_f,
+        'fin'   => target.fin.to_f,
+        'run'   => target.fin - target.ini
       }
     end
 

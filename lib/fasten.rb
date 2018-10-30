@@ -11,6 +11,7 @@ require 'csv'
 require 'hirb'
 require 'parallel'
 
+require 'fasten/state'
 require 'fasten/logger'
 require 'fasten/stats'
 require 'fasten/task'

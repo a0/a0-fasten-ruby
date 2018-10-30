@@ -2,19 +2,30 @@ module Fasten
   module LoadSave
     attr_reader :stats_path
 
+    def transform_params(params)
+      params.keys.each do |k|
+        val = params[k]
+
+        if val.is_a?(String) && (match = %r{^/(.+)/$}.match(val))
+          val = Regexp.new(match[1])
+        end
+
+        params[k.to_sym] = val
+        params.delete(k)
+      end
+    end
+
     def load(path)
       items = YAML.safe_load(File.read(path)).each do |name, params|
         if params.is_a? String
           params = { after: params }
+        elsif params.is_a? Hash
+          transform_params(params)
         else
-          params&.each do |key, val|
-            next unless val.is_a?(String) && (match = %r{^/(.+)/$}.match(val))
-
-            params[key] = Regexp.new(match[1])
-          end
+          params = {}
         end
 
-        add Fasten::Task.new({ name: name }.merge(params || {}))
+        add Fasten::Task.new({ name: name }.merge(params))
       end
 
       log_info "Loaded #{items.count} tasks from #{path}"
@@ -61,13 +72,6 @@ module Fasten
           csv << data.values
         end
       end
-    end
-
-    def setup_stats(name)
-      @stats_path = "#{ENV['HOME']}/.fasten/stats/#{name}.csv" if ENV['HOME'] && name
-      FileUtils.mkdir_p File.dirname(@stats_path)
-    rescue StandardError
-      @stats_path = nil
     end
   end
 end

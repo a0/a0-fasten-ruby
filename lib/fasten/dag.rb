@@ -45,7 +45,7 @@ module Fasten
     end
 
     def next_task
-      task_waiting_list.sort_by!(&:run_score).pop
+      task_waiting_list.shift
     end
 
     def task_waiting_list
@@ -67,16 +67,26 @@ module Fasten
       @task_waiting_list ||= []
       @task_pending_list -= move_list
       @task_waiting_list += move_list
+      @task_waiting_list.sort_by!.with_index { |x, index| [-x.run_score, index] }
     end
 
     def reset_tasks
       @task_pending_list.clear
       @task_done_list.clear
+      @task_error_list.clear
+
       @task_list.each do |task|
         task.dependants = []
         task.depends = []
         task.run_score = 0
-        task.done ? @task_done_list << task : @task_pending_list << task
+
+        if task.state == :DONE
+          @task_done_list << task
+        elsif task.state == :FAIL
+          @task_error_list << task
+        else
+          @task_pending_list << task
+        end
       end
     end
 

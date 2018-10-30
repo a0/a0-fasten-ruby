@@ -1,21 +1,28 @@
 module Fasten
-  class Executor < Task
+  class Executor
     include Fasten::Logger
+    include Fasten::State
     include Fasten::DAG
     include Fasten::UI
     include Fasten::LoadSave
     include Fasten::Stats
 
-    def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Fasten::Worker, fasten_dir: '.fasten')
-      setup_stats(name)
-      super name: name || "#{self.class} #{$PID}", workers: workers, pid: $PID, state: :IDLE, worker_class: worker_class, fasten_dir: fasten_dir, developer: developer
+    attr_accessor :name, :workers, :worker_class, :pid, :fasten_dir, :developer, :stats, :worker_list, :block
+
+    def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Worker, fasten_dir: '.fasten')
+      self.stats = name && true
+      self.name = name || "#{self.class} #{$PID}"
+      self.state = :IDLE
+      self.workers = workers
+      self.worker_class = worker_class
+      self.fasten_dir = fasten_dir
+      self.developer = developer
+
       initialize_dag
+      initialize_stats
+      initialize_logger
 
       self.worker_list = []
-      log_path = "#{fasten_dir}/log/executor/#{self.name}.log"
-      FileUtils.mkdir_p File.dirname(log_path)
-      self.log_file = File.new(log_path, 'a')
-      Fasten.logger.reopen log_file
     end
 
     def perform
@@ -62,7 +69,7 @@ module Fasten
     def check_state
       if state == :PAUSING && no_running_tasks?
         self.state = :PAUSED
-        self.ui.message = nil
+        ui.message = nil
         ui.force_clear
       elsif state == :QUITTING && no_running_tasks?
         self.state = :QUIT
@@ -101,17 +108,22 @@ module Fasten
       end
     end
 
-    def raise_error_in_failure
-      return unless tasks_failed?
-
+    def show_error_tasks
       task_error_list.each do |task|
         log_info "task: #{task} error:#{task.error}\n#{task.error&.backtrace&.join("\n")}"
       end
+    end
+
+    def raise_error_in_failure
+      return unless tasks_failed?
+
+      show_error_tasks
+
+      message = "Stopping because the following tasks failed: #{task_error_list.map(&:to_s).join(', ')}"
 
       if developer
         ui.cleanup
-        puts "Stopping because the following tasks failed:\n"
-        task_error_list.map(&:to_s).each { |x| puts "  #{x}" }
+        puts message
 
         puts 'Entering development console'
 
@@ -119,7 +131,7 @@ module Fasten
       else
         remove_all_workers
 
-        raise "Stopping because the following tasks failed: #{task_error_list.map(&:to_s).join(', ')}"
+        raise message
       end
     end
 
