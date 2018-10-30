@@ -1,7 +1,5 @@
 module Fasten
-  module LoadSave
-    attr_reader :stats_path
-
+  module Yaml
     def transform_params(params)
       params.keys.each do |k|
         val = params[k]
@@ -15,7 +13,7 @@ module Fasten
       end
     end
 
-    def load(path)
+    def load_yaml(path)
       items = YAML.safe_load(File.read(path)).each do |name, params|
         if params.is_a? String
           params = { after: params }
@@ -31,7 +29,7 @@ module Fasten
       log_info "Loaded #{items.count} tasks from #{path}"
     end
 
-    def save(path)
+    def save_yaml(path)
       keys = %i[after shell]
 
       items = task_list.map do |task|
@@ -45,33 +43,6 @@ module Fasten
       File.write path, items.to_yaml
 
       log_info "Loaded #{items.count} tasks into #{path}"
-    end
-
-    def load_stats
-      return unless @stats_path && File.exist?(@stats_path)
-
-      self.stats_data = []
-      CSV.foreach(@stats_path, headers: true) do |row|
-        stats_data << row.to_h
-      end
-
-      @task_waiting_list = nil
-    rescue StandardError
-      nil
-    ensure
-      self.stats ||= {}
-    end
-
-    def save_stats
-      return unless @stats_path && stats_data
-
-      CSV.open(@stats_path, 'wb') do |csv|
-        csv << stats_data.first.keys
-
-        stats_data.each do |data|
-          csv << data.values
-        end
-      end
     end
   end
 end

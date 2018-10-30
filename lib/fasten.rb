@@ -17,7 +17,7 @@ require 'fasten/stats'
 require 'fasten/task'
 require 'fasten/ui'
 require 'fasten/dag'
-require 'fasten/load_save'
+require 'fasten/yaml'
 require 'fasten/executor'
 require 'fasten/worker'
 require 'fasten/version'
@@ -26,9 +26,9 @@ module Fasten
   class << self
     include Fasten::Logger
 
-    def load(path, **options)
+    def from_yaml(path, **options)
       executor = Fasten::Executor.new(**options)
-      executor.load(path)
+      executor.load_yaml(path)
 
       executor
     end

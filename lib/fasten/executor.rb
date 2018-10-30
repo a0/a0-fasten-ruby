@@ -4,7 +4,7 @@ module Fasten
     include Fasten::State
     include Fasten::DAG
     include Fasten::UI
-    include Fasten::LoadSave
+    include Fasten::Yaml
     include Fasten::Stats
 
     attr_accessor :name, :workers, :worker_class, :pid, :fasten_dir, :developer, :stats, :worker_list, :block

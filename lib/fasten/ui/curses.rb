@@ -140,13 +140,13 @@ module Fasten
       end
 
       def ui_state
-        if state == :RUNNING
+        if executor.running?
           attrs = color_pair(2)
-        elsif state == :PAUSING
+        elsif executor.pausing?
           attrs = color_pair(1) | A_BLINK | A_STANDOUT
-        elsif state == :PAUSED
+        elsif executor.paused?
           attrs = color_pair(1) | A_STANDOUT
-        elsif state == :QUITTING
+        elsif executor.quitting?
           attrs = color_pair(3) | A_BLINK | A_STANDOUT
         end
 
@@ -174,27 +174,33 @@ module Fasten
 
       def ui_task_icon(task)
         case task.state
-        when :RUNN
+        when :RUNNING
           SPINNER_STR[task.worker&.spinner]
         when :FAIL
           '✘'
         when :DONE
           '✔'
-        else
+        when :WAIT
           '…'
+        else
+          ' '
         end
       end
 
       def ui_task_color(task)
         case task.state
-        when :RUNN
+        when :RUNNING
           color_pair(1) | A_TOP
         when :FAIL
           color_pair(3) | A_TOP
         when :DONE
           color_pair(2) | A_TOP
         else
-          color_pair(4) | A_TOP
+          if task_waiting_list.include? task
+            A_TOP
+          else
+            color_pair(4) | A_DIM
+          end
         end
       end
 
@@ -239,16 +245,23 @@ module Fasten
         list.each_with_index do |task, index|
           next if 3 + index >= n_rows
 
-          if task.dif
-            setpos 3 + index, max + 2
-            ui_task_string(task, 3 + index, max + 2, str: format('%.2f s', task.dif))
-          elsif task.depends && !task.depends.empty?
-            setpos 3 + index, max
-            x = max + 2
-            addstr ':'
+          if task.depends && !task.depends.empty?
+            x = max
+            x = ui_task_string(task, 3 + index, x, str: ':') + 1
             task.depends.each do |dependant_task|
               x = ui_task_string(dependant_task, 3 + index, x) + 1
             end
+          else
+            x = max + 1
+            last = executor.stats_last(task)
+            if task.dif
+              str = format '  %.2f s', task.dif
+            elsif last['avg'] && last['err']
+              str = format '≈ %.2f s ± %.2f %s', last['avg'], last['err'], task.worker&.name
+            elsif last['avg']
+              str = format '≈ %.2f s %s', last['avg'], task.worker&.name
+            end
+            ui_task_string(task, 3 + index, x, str: str) if str
           end
         end
       end

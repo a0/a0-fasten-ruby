@@ -53,9 +53,10 @@ module Fasten
     end
 
     def send_request(task)
-      task.state = :RUNN
+      task.state = :RUNNING
       task.worker = self
       self.running_task = task
+      self.state = :RUNNING
       Marshal.dump(task, parent_write)
     end
 
@@ -65,25 +66,17 @@ module Fasten
       %i[state ini fin dif response error].each { |key| running_task.send "#{key}=", updated_task.send(key) }
 
       task = running_task
-      self.running_task = nil
+      self.running_task = self.state = nil
 
       task
     end
 
     def kill
       log_info 'Removing worker'
-      Process.kill(:KILL, pid)
+      Process.kill :KILL, pid
       close_parent_pipes
     rescue StandardError => error
       log_warn "Ignoring error killing worker #{self}, error: #{error}"
-    end
-
-    def idle?
-      running_task.nil?
-    end
-
-    def running?
-      !idle?
     end
 
     protected

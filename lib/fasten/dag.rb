@@ -67,7 +67,10 @@ module Fasten
       @task_waiting_list ||= []
       @task_pending_list -= move_list
       @task_waiting_list += move_list
-      @task_waiting_list.sort_by!.with_index { |x, index| [-x.run_score, index] }
+      @task_waiting_list.sort_by!.with_index do |x, index|
+        x.state = :WAIT
+        [-x.run_score, index]
+      end
     end
 
     def reset_tasks
@@ -85,6 +88,7 @@ module Fasten
         elsif task.state == :FAIL
           @task_error_list << task
         else
+          task.state = :IDLE
           @task_pending_list << task
         end
       end
