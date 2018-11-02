@@ -48,7 +48,7 @@ module Fasten
 
       def stats_create_entry(state, target)
         { 'state' => state.to_s,
-          'kind'  => stats_kind_for(target),
+          'kind'  => target.kind,
           'name'  => target.name,
           'ini'   => target.ini.to_f,
           'fin'   => target.fin.to_f,
@@ -62,10 +62,6 @@ module Fasten
 
       def stats_entries
         @stats_entries ||= []
-      end
-
-      def stats_kind_for(object)
-        object.is_a?(Fasten::Runner) ? 'runner' : 'task'
       end
 
       def stats_add_entry(state, target)
@@ -129,7 +125,7 @@ module Fasten
       def stats_last(item)
         return item.last if item.last
 
-        item.last = stats_data.select { |e| e['kind'] == stats_kind_for(item) && e['name'] == item.name }.last || {}
+        item.last = stats_data.select { |e| e['kind'] == item.kind && e['name'] == item.name }.last || {}
       end
 
       def update_stats(history, entry)

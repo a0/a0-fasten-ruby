@@ -1,9 +1,7 @@
-require 'fasten/support/logger'
 require 'fasten/support/state'
 
 module Fasten
   class Task
-    include Fasten::Support::Logger
     include Fasten::Support::State
 
     attr_accessor :name, :after, :shell, :ruby
@@ -23,6 +21,10 @@ module Fasten
 
     def marshal_load(data)
       @name, @state, @ini, @fin, @dif, @request, @response, @shell, @ruby, @error = data
+    end
+
+    def kind
+      'task'
     end
 
     def to_s

@@ -22,6 +22,8 @@ module Fasten
       self.runner = runner
       self.name = name
       self.spinner = 0
+
+      initialize_logger(log_file: runner&.log_file)
     end
 
     def perform(task)
@@ -44,7 +46,7 @@ module Fasten
       task.response = block.call(task.request)
     end
 
-    def fork
+    def spawn
       create_pipes
 
       self.pid = Process.fork do
@@ -78,9 +80,19 @@ module Fasten
     def kill
       log_info 'Removing worker'
       Process.kill :KILL, pid
-      close_parent_pipes
     rescue StandardError => error
       log_warn "Ignoring error killing worker #{self}, error: #{error}"
+    ensure
+      close_parent_pipes
+      close_child_pipes
+    end
+
+    def kind
+      'worker'
+    end
+
+    def to_s
+      name
     end
 
     protected
@@ -113,19 +125,19 @@ module Fasten
     end
 
     def run_task(task)
-      log_ini task, 'perform'
-      Fasten.logger.reopen(STDOUT)
+      log_ini task, 'run_task'
+      logger.reopen(STDOUT)
       redirect_std "#{runner.fasten_dir}/log/task/#{task.name}.log"
 
       perform_task task
-
+    ensure
       restore_std
-      Fasten.logger.reopen(runner.log_file)
-      log_fin task, 'perform'
+      logger.reopen(log_file)
+      log_fin task, 'run_task'
     end
 
     def perform_task(task)
-      log_ini task, 'perform'
+      log_ini task, 'perform_task'
 
       perform(task)
       task.state = :DONE
@@ -133,12 +145,13 @@ module Fasten
       task.state = :FAIL
       task.error = WorkerError.new(error)
     ensure
-      log_fin task, 'perform'
+      log_fin task, 'perform_task'
       send_response(task)
     end
 
     def send_response(task)
       log_info "Sending task response back to runner #{task}"
+
       data = Marshal.dump(task)
       child_write.write(data)
     end

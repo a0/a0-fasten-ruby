@@ -36,8 +36,8 @@ module Fasten
     end
 
     def perform
-      log_ini self, running_counters
       self.state = :RUNNING
+      log_ini self, running_counters
       load_stats
 
       run_ui do
@@ -176,8 +176,8 @@ module Fasten
       unless worker
         @worker_id = (@worker_id || 0) + 1
         worker = worker_class.new runner: self, name: "#{worker_class}-#{format '%02X', @worker_id}"
-        worker.block = block if block
-        worker.fork
+        worker.block = block
+        worker.spawn
         worker_list << worker
 
         log_info "Worker created: #{worker}"
@@ -206,6 +206,14 @@ module Fasten
       worker_list.clear
 
       ui.force_clear
+    end
+
+    def kind
+      'runner'
+    end
+
+    def to_s
+      name
     end
   end
 end

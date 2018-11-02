@@ -9,23 +9,29 @@ module Fasten
 
   module Support
     module Logger
-      attr_accessor :log_file
+      attr_accessor :log_file, :logger
 
       %w[debug info error].each do |method|
         define_method "log_#{method}" do |msg|
-          return unless Fasten.logger.respond_to?(method)
+          dest_logger = logger || Fasten.logger
+          return unless dest_logger.respond_to?(method)
 
           caller_name = name if respond_to? :name
           caller_name ||= Kernel.binding.of_caller(1).eval('self').class
-          Fasten.logger.send(method, caller_name) { msg }
+          dest_logger.send(method, caller_name) { msg }
         end
       end
 
-      def initialize_logger
-        log_path = "#{fasten_dir}/log/runner/#{name}.log"
-        FileUtils.mkdir_p File.dirname(log_path)
-        self.log_file = File.new(log_path, 'a')
-        Fasten.logger.reopen log_file
+      def initialize_logger(log_file: nil)
+        if log_file
+          self.log_file = log_file
+        else
+          log_path ||= "#{fasten_dir}/log/#{kind}/#{name}.log"
+          FileUtils.mkdir_p File.dirname(log_path)
+          self.log_file = File.new(log_path, 'a')
+          self.log_file.sync = true
+        end
+        self.logger = ::Logger.new self.log_file, level: Fasten.logger.level, progname: Fasten.logger.progname
       end
 
       def log_ini(object, message = nil)
