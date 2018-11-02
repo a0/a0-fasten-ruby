@@ -2,7 +2,7 @@
 clean:
   shell: |
     echo $$ running clean…
-    sleep 1
+    sleep 0.5
     touch clean.testfile
     echo $$ ok clean.
 db-setup-1:
@@ -11,14 +11,14 @@ db-setup-1:
     - compile-1
   shell: |
     echo $$ running db-setup-1…
-    sleep 2
+    sleep 1
     touch db-setup-1.testfile
     echo $$ ok db-setup-1.
 db-setup-2:
   after: db-update
   shell: |
     echo $$ running db-setup-2…
-    sleep 3
+    sleep 1.5
     touch db-setup-2.testfile
     echo $$ ok db-setup-2.
 db-update:
@@ -27,68 +27,68 @@ db-update:
     - db-reset
   shell: |
     echo $$ running db-update…
-    sleep 4
+    sleep 2
     touch db-update.testfile
     echo $$ ok db-update.
 db-reset:
   after: env-setup
   shell: |
     echo $$ running db-reset…
-    sleep 5
+    sleep 2.5
     touch db-reset.testfile
     echo $$ ok db-reset.
 db-sync:
   after: env-setup
   shell: |
     echo $$ running db-sync…
-    sleep 6
+    sleep 3
     touch db-sync.testfile
     echo $$ ok db-sync.
 fs-sync-1:
   after: env-setup
   shell: |
     echo $$ running fs-sync-1…
-    sleep 7
+    sleep 3.5
     touch fs-sync-1.testfile
     echo $$ ok fs-sync-1.
 fs-sync-2:
   after: env-setup
   shell: |
     echo $$ running fs-sync-2…
-    sleep 8
+    sleep 4
     touch fs-sync-2.testfile
     echo $$ ok fs-sync-2.
 compile-1:
   after: env-setup
   shell: |
     echo $$ running compile-1…
-    sleep 9
+    sleep 4.5
     touch compile-1.testfile
     echo $$ ok compile-1.
 compile-2:
   after: env-setup
   shell: |
     echo $$ running compile-2…
-    sleep 10
+    sleep 5
     touch compile-2.testfile
     echo $$ ok compile-2.
 compile-3:
   after: env-setup
   shell: |
     echo $$ running compile-3…
-    sleep 11
+    sleep 5.5
     touch compile-3.testfile
     echo $$ ok compile-3.
 version:
   after: env-setup
   shell: |
     echo $$ running version…
-    sleep 12
+    sleep 6
     touch version.testfile
     echo $$ ok version.
 env-setup:
   shell: |
     echo $$ running env-setup…
-    sleep 13
+    sleep 6.5
     touch env-setup.testfile
     echo $$ ok env-setup.

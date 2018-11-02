@@ -4,15 +4,15 @@ RSpec.describe Fasten do
   end
 
   it 'can perform a YAML file' do |ex|
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
     f = Fasten.runner_from_yaml('spec/yaml_spec.yml', name: ex.description)
     f.perform
     f.stats_table
 
     files = Dir['*.testfile']
     items = f.task_list.map { |item| "#{item}.testfile" }
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
 
-    raise "Files don't match, files: #{files} items: #{items}" unless files.sort == items.sort
+    expect(files.sort).to eq(items.sort)
   end
 end

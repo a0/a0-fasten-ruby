@@ -14,7 +14,7 @@ end
 
 RSpec.describe Fasten do
   it 'early stop in case of failure' do |ex|
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
 
     f = Fasten::Runner.new name: ex.description, workers: 1, worker_class: ErrorWorker, developer: false
 
@@ -24,13 +24,13 @@ RSpec.describe Fasten do
     expect { f.perform }.to raise_error(StandardError)
 
     files = Dir['*.testfile']
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
 
-    raise "Should only be 9 testfiles, but there are #{files.count}" unless files.count == 9
+    expect(files.count).to eq(9)
   end
 
   it 'it should wait other tasks end in case of failure' do |ex|
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
 
     f = Fasten::Runner.new name: ex.description, workers: 10, worker_class: ErrorWorker, developer: false
 
@@ -40,8 +40,8 @@ RSpec.describe Fasten do
     expect { f.perform }.to raise_error(StandardError)
 
     files = Dir['*.testfile']
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
 
-    raise "Should only be 81 testfiles, but there are #{files.count}" unless files.count == 90
+    expect(files.count).to eq(90)
   end
 end

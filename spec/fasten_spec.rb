@@ -10,7 +10,7 @@ RSpec.describe Fasten do
   end
 
   it 'performs 500 tasks with 100 workers, without dependencies' do |ex|
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
     f = Fasten::Runner.new name: ex.description, workers: 100
     500.times do |index|
       f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.2; touch #{index}.testfile")
@@ -20,13 +20,13 @@ RSpec.describe Fasten do
 
     files = Dir['*.testfile']
     items = f.task_list.map { |item| "#{item}.testfile" }
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
 
-    raise "Files don't match, files: #{files} items: #{items}" unless files.sort == items.sort
+    expect(files.sort).to eq(items.sort)
   end
 
   it 'performs 500 tasks with 5 workers, including dependencies' do |ex|
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
     l = {}
     500.times do
       m = rand(65..90).chr
@@ -54,8 +54,8 @@ RSpec.describe Fasten do
 
     files = Dir['*.testfile']
     items = f.task_list.map { |item| "#{item}.testfile" }
-    `rm -f *.testfile`
+    FileUtils.rm_rf Dir.glob('*.testfile')
 
-    raise "Files don't match, files: #{files} items: #{items}" unless files.sort == items.sort
+    expect(files.sort).to eq(items.sort)
   end
 end
