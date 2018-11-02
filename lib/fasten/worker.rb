@@ -1,3 +1,7 @@
+require 'English'
+require 'fasten/support/logger'
+require 'fasten/support/state'
+
 module Fasten
   class WorkerError < StandardError
     attr_reader :backtrace
@@ -9,13 +13,13 @@ module Fasten
   end
 
   class Worker
-    include Fasten::Logger
-    include Fasten::State
+    include Fasten::Support::Logger
+    include Fasten::Support::State
 
-    attr_accessor :executor, :name, :spinner, :child_read, :child_write, :parent_read, :parent_write, :pid, :block, :running_task
+    attr_accessor :runner, :name, :spinner, :child_read, :child_write, :parent_read, :parent_write, :pid, :block, :running_task
 
-    def initialize(executor:, name: nil)
-      self.executor = executor
+    def initialize(runner:, name: nil)
+      self.runner = runner
       self.name = name
       self.spinner = 0
     end
@@ -111,12 +115,12 @@ module Fasten
     def run_task(task)
       log_ini task, 'perform'
       Fasten.logger.reopen(STDOUT)
-      redirect_std "#{executor.fasten_dir}/log/task/#{task.name}.log"
+      redirect_std "#{runner.fasten_dir}/log/task/#{task.name}.log"
 
       perform_task task
 
       restore_std
-      Fasten.logger.reopen(executor.log_file)
+      Fasten.logger.reopen(runner.log_file)
       log_fin task, 'perform'
     end
 
@@ -134,7 +138,7 @@ module Fasten
     end
 
     def send_response(task)
-      log_info "Sending task response back to executor #{task}"
+      log_info "Sending task response back to runner #{task}"
       data = Marshal.dump(task)
       child_write.write(data)
     end

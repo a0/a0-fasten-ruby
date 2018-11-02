@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'curses'
 require 'forwardable'
 
 module Fasten
@@ -8,18 +9,18 @@ module Fasten
       include ::Curses
       extend Forwardable
 
-      def_delegators :executor, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
-      def_delegators :executor, :name, :workers, :workers=, :state, :state=
+      def_delegators :runner, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
+      def_delegators :runner, :name, :workers, :workers=, :state, :state=
 
-      attr_accessor :n_rows, :n_cols, :clear_needed, :message, :executor
+      attr_accessor :n_rows, :n_cols, :selected, :sel_index, :clear_needed, :message, :runner
 
       SPINNER_STR = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
       SPINNER_LEN = SPINNER_STR.length
       PROGRESSBAR_STR = ' ▏▎▍▌▋▊▉'
       PROGRESSBAR_LEN = PROGRESSBAR_STR.length
 
-      def initialize(executor:)
-        @executor = executor
+      def initialize(runner:)
+        @runner = runner
       end
 
       def update
@@ -99,11 +100,17 @@ module Fasten
             self.message = "Can't remove 1 worker left, press [P] to pause"
           else
             self.workers -= 1
-            self.message = "Decreasing max workers to #{workers}"
+            self.message = "Decreasing workers to #{workers}"
           end
         elsif key == Curses::Key::RIGHT
           self.workers += 1
-          self.message = "Increasing max workers to #{workers}"
+          self.message = "Increasing workers to #{workers}"
+        elsif key == Curses::Key::DOWN
+          self.sel_index = sel_index ? [sel_index + 1, task_list.count - 1].min : 0
+          self.selected = task_list[sel_index]
+        elsif key == Curses::Key::UP
+          self.sel_index = sel_index ? [sel_index - 1, 0].max : task_list.count - 1
+          self.selected = task_list[sel_index]
         elsif key == 'q'
           self.message = 'Will quit when running tasks end'
           self.state = :QUITTING
@@ -140,13 +147,13 @@ module Fasten
       end
 
       def ui_state
-        if executor.running?
+        if runner.running?
           attrs = color_pair(2)
-        elsif executor.pausing?
+        elsif runner.pausing?
           attrs = color_pair(1) | A_BLINK | A_STANDOUT
-        elsif executor.paused?
+        elsif runner.paused?
           attrs = color_pair(1) | A_STANDOUT
-        elsif executor.quitting?
+        elsif runner.quitting?
           attrs = color_pair(3) | A_BLINK | A_STANDOUT
         end
 
@@ -188,19 +195,16 @@ module Fasten
       end
 
       def ui_task_color(task)
+        rev = task == selected ? A_REVERSE : 0
         case task.state
         when :RUNNING
-          color_pair(1) | A_TOP
+          color_pair(1) | A_TOP | rev
         when :FAIL
-          color_pair(3) | A_TOP
+          color_pair(3) | A_TOP | rev
         when :DONE
-          color_pair(2) | A_TOP
+          color_pair(2) | A_TOP | rev
         else
-          if task_waiting_list.include? task
-            A_TOP
-          else
-            color_pair(4) | A_DIM
-          end
+          task_waiting_list.include?(task) ? A_TOP | rev : color_pair(4) | A_DIM | rev
         end
       end
 
@@ -253,7 +257,7 @@ module Fasten
             end
           else
             x = max + 1
-            last = executor.stats_last(task)
+            last = runner.stats_last(task)
             if task.dif
               str = format '  %.2f s', task.dif
             elsif last['avg'] && last['err']

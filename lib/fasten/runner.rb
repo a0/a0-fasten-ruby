@@ -1,18 +1,28 @@
+require 'English'
+require 'parallel'
+require 'pry'
+
+require 'fasten/support/dag'
+require 'fasten/support/logger'
+require 'fasten/support/state'
+require 'fasten/support/stats'
+require 'fasten/support/ui'
+require 'fasten/support/yaml'
+
 module Fasten
-  class Executor
-    include Fasten::Logger
-    include Fasten::State
-    include Fasten::DAG
-    include Fasten::UI
-    include Fasten::Yaml
-    include Fasten::Stats
+  class Runner
+    include Fasten::Support::DAG
+    include Fasten::Support::Logger
+    include Fasten::Support::State
+    include Fasten::Support::Stats
+    include Fasten::Support::UI
+    include Fasten::Support::Yaml
 
     attr_accessor :name, :workers, :worker_class, :pid, :fasten_dir, :developer, :stats, :worker_list, :block
 
     def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Worker, fasten_dir: '.fasten')
       self.stats = name && true
       self.name = name || "#{self.class} #{$PID}"
-      self.state = :IDLE
       self.workers = workers
       self.worker_class = worker_class
       self.fasten_dir = fasten_dir
@@ -38,7 +48,21 @@ module Fasten
       log_fin self, running_counters
 
       stats_add_entry(state, self)
+    ensure
       save_stats
+    end
+
+    def map(list, &block)
+      self.block = block
+
+      list.each do |item|
+        add Fasten::Task.new name: item.to_s, request: item
+      end
+
+      perform
+      stats_table
+
+      task_list.map(&:response)
     end
 
     def done_counters
@@ -85,7 +109,7 @@ module Fasten
       while should_wait_for_running_tasks?
         ui.update
         reads = worker_list.map(&:parent_read)
-        reads, _writes, _errors = IO.select(reads, [], [], 1)
+        reads, _writes, _errors = IO.select(reads, [], [], 0.5)
 
         receive_workers_tasks(reads)
       end
@@ -151,7 +175,7 @@ module Fasten
 
       unless worker
         @worker_id = (@worker_id || 0) + 1
-        worker = worker_class.new executor: self, name: "#{worker_class}-#{format '%02X', @worker_id}"
+        worker = worker_class.new runner: self, name: "#{worker_class}-#{format '%02X', @worker_id}"
         worker.block = block if block
         worker.fork
         worker_list << worker

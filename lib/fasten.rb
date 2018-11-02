@@ -1,50 +1,21 @@
 # frozen_string_literal: true
 
-require 'English'
-require 'yaml'
-require 'binding_of_caller'
-require 'logger'
-require 'ostruct'
-require 'curses'
-require 'fileutils'
-require 'csv'
-require 'hirb'
-require 'parallel'
-
-require 'fasten/state'
-require 'fasten/logger'
-require 'fasten/stats'
 require 'fasten/task'
-require 'fasten/ui'
-require 'fasten/dag'
-require 'fasten/yaml'
-require 'fasten/executor'
+require 'fasten/runner'
 require 'fasten/worker'
 require 'fasten/version'
 
 module Fasten
   class << self
-    include Fasten::Logger
+    def runner_from_yaml(path, **options)
+      runner = Fasten::Runner.new(**options)
+      runner.load_yaml(path)
 
-    def from_yaml(path, **options)
-      executor = Fasten::Executor.new(**options)
-      executor.load_yaml(path)
-
-      executor
+      runner
     end
 
     def map(list, **options, &block)
-      executor = Fasten::Executor.new(**options)
-      executor.block = block
-
-      list.each do |item|
-        executor.add Fasten::Task.new name: item.to_s, request: item
-      end
-
-      executor.perform
-      executor.stats_table
-
-      executor.task_list.map(&:response)
+      Fasten::Runner.new(**options).map(list, &block)
     end
   end
 end

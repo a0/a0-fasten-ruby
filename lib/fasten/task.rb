@@ -1,7 +1,10 @@
+require 'fasten/support/logger'
+require 'fasten/support/state'
+
 module Fasten
   class Task
-    include Fasten::Logger
-    include Fasten::State
+    include Fasten::Support::Logger
+    include Fasten::Support::State
 
     attr_accessor :name, :after, :shell, :ruby
     attr_accessor :dependants, :depends, :request, :response, :worker, :run_score

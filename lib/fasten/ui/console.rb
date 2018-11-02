@@ -5,13 +5,13 @@ module Fasten
     class Console
       extend Forwardable
 
-      def_delegators :executor, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
-      def_delegators :executor, :name, :workers, :workers=, :state, :state=, :hformat
+      def_delegators :runner, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
+      def_delegators :runner, :name, :workers, :workers=, :state, :state=, :hformat
 
-      attr_accessor :executor
+      attr_accessor :runner
 
-      def initialize(executor:)
-        @executor = executor
+      def initialize(runner:)
+        @runner = runner
         @old = {
           task_done_list: [],
           task_error_list: []
@@ -50,7 +50,7 @@ module Fasten
         return unless old.count != orig.count
 
         (orig - old).each do |task|
-          puts "Time: #{hformat Time.new - executor.ini} #{message} #{hformat task.dif} Task #{task}"
+          puts "Time: #{hformat Time.new - runner.ini} #{message} #{hformat task.dif} Task #{task}"
           old << task
         end
       end
