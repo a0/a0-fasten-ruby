@@ -1,6 +1,7 @@
 require 'English'
 require 'parallel'
 require 'pry'
+require 'os'
 
 require 'fasten/support/dag'
 require 'fasten/support/logger'
@@ -21,7 +22,7 @@ module Fasten
 
     attr_accessor :name, :workers, :worker_class, :fasten_dir, :developer, :stats, :worker_list, :block, :use_threads, :queue
 
-    def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Worker, fasten_dir: '.fasten', use_threads: false)
+    def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Worker, fasten_dir: '.fasten', use_threads: !OS.posix?)
       self.stats = name && true
       self.name = name || "#{self.class} #{$PID}"
       self.workers = workers
