@@ -1,3 +1,5 @@
+require 'fasten/std_thread_proxy'
+
 module Fasten
   module Support
     module ThreadWorker

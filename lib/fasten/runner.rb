@@ -63,7 +63,6 @@ module Fasten
       end
 
       perform
-      stats_table
 
       task_list.map(&:response)
     end

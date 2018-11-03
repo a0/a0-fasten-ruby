@@ -1,22 +1,22 @@
-RSpec.describe Fasten do
-  it 'has a version number' do
+RSpec.shared_examples 'basic funcionality' do |use_threads|
+  process_model = use_threads ? 'threads' : 'processes'
+
+  it "using #{process_model}, has a version number" do
     expect(Fasten::VERSION).not_to be nil
   end
 
-  it 'performs an empty runner' do |ex|
-    f = Fasten::Runner.new name: ex.description
+  it "using #{process_model}, performs an empty runner" do |ex|
+    f = Fasten::Runner.new name: ex.description, use_threads: use_threads
     f.perform
-    f.stats_table
   end
 
-  it 'performs 500 tasks with 100 workers, without dependencies' do |ex|
+  it "using #{process_model}, performs 500 tasks with 100 workers, without dependencies" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
-    f = Fasten::Runner.new name: ex.description, workers: 100
+    f = Fasten::Runner.new name: ex.description, workers: 100, use_threads: use_threads
     500.times do |index|
       f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.2; touch #{index}.testfile")
     end
     f.perform
-    f.stats_table
 
     files = Dir['*.testfile']
     items = f.task_list.map { |item| "#{item}.testfile" }
@@ -25,7 +25,7 @@ RSpec.describe Fasten do
     expect(files.sort).to eq(items.sort)
   end
 
-  it 'performs 500 tasks with 5 workers, including dependencies' do |ex|
+  it "using #{process_model}, performs 500 tasks with 5 workers, including dependencies" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
     l = {}
     500.times do
@@ -45,12 +45,11 @@ RSpec.describe Fasten do
       end
     end
 
-    f = Fasten::Runner.new name: ex.description, workers: 50
+    f = Fasten::Runner.new name: ex.description, workers: 50, use_threads: use_threads
     l.values.map(&:values).flatten.each do |item|
       f.add Fasten::Task.new(name: item[:task], after: item[:after], shell: item[:shell])
     end
     f.perform
-    f.stats_table
 
     files = Dir['*.testfile']
     items = f.task_list.map { |item| "#{item}.testfile" }
@@ -58,4 +57,9 @@ RSpec.describe Fasten do
 
     expect(files.sort).to eq(items.sort)
   end
+end
+
+RSpec.describe Fasten do
+  it_behaves_like 'basic funcionality', false if OS.posix?
+  it_behaves_like 'basic funcionality', true
 end

@@ -1,22 +1,10 @@
-class ErrorWorker < Fasten::Worker
-  def initialize(*)
-    super
-    @fail_at ||= ENV['FAILT_AT'] || 10
-  end
+RSpec.shared_examples 'error handling' do |use_threads|
+  process_model = use_threads ? 'threads' : 'processes'
 
-  def perform(task)
-    @count = (@count || 0) + 1
-    raise "Simulating Error, counter: #{@count}" if (@count % @fail_at).zero?
-
-    super
-  end
-end
-
-RSpec.describe Fasten do
-  it 'early stop in case of failure' do |ex|
+  it "using #{process_model}, early stop in case of failure" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
 
-    f = Fasten::Runner.new name: ex.description, workers: 1, worker_class: ErrorWorker, developer: false
+    f = Fasten::Runner.new name: ex.description, workers: 1, worker_class: ErrorWorker, developer: false, use_threads: use_threads
 
     100.times do |index|
       f.add Fasten::Task.new name: index.to_s, shell: "sleep 0.05; touch #{index}.testfile"
@@ -29,10 +17,10 @@ RSpec.describe Fasten do
     expect(files.count).to eq(9)
   end
 
-  it 'it should wait other tasks end in case of failure' do |ex|
+  it "using #{process_model}, it should wait other tasks end in case of failure" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
 
-    f = Fasten::Runner.new name: ex.description, workers: 10, worker_class: ErrorWorker, developer: false
+    f = Fasten::Runner.new name: ex.description, workers: 10, worker_class: ErrorWorker, developer: false, use_threads: use_threads
 
     100.times do |index|
       f.add Fasten::Task.new name: index.to_s, shell: "sleep 0.1; touch #{index}.testfile"
@@ -44,4 +32,9 @@ RSpec.describe Fasten do
 
     expect(files.count).to eq(90)
   end
+end
+
+RSpec.describe Fasten do
+  it_behaves_like 'error handling', false if OS.posix?
+  it_behaves_like 'error handling', true
 end

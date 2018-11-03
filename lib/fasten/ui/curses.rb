@@ -129,7 +129,7 @@ module Fasten
         waiting_count = task_waiting_list.count
         workers_count = worker_list.count
 
-        "Procs run: #{running_count} idle: #{workers_count - running_count} #{runner.use_threads ? 'threads' : 'workers'}: #{workers} wait: #{waiting_count}"
+        "Procs run: #{running_count} idle: #{workers_count - running_count} #{runner.use_threads ? 'threads' : 'processes'}: #{workers} wait: #{waiting_count}"
       end
 
       def ui_workers

@@ -22,7 +22,7 @@ module Fasten
         puts <<~FIN
 
           = == === ==== ===== ====== ======= ======== ========= ==========
-          Fasten your seatbelts! #{'💺' * workers} #{runner.use_threads ? 'threads' : 'fork'}
+          Fasten your seatbelts! #{'💺' * workers} #{runner.use_threads ? 'threads' : 'processes'}
 
           #{name}
         FIN

@@ -12,3 +12,17 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+class ErrorWorker < Fasten::Worker
+  def initialize(*)
+    super
+    @fail_at ||= ENV['FAILT_AT'] || 10
+  end
+
+  def perform(task)
+    @count = (@count || 0) + 1
+    raise "Simulating Error, counter: #{@count}" if (@count % @fail_at).zero?
+
+    super
+  end
+end
