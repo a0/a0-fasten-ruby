@@ -1,6 +1,8 @@
 require 'English'
 require 'fasten/support/logger'
 require 'fasten/support/state'
+require 'fasten/support/fork_worker'
+require 'fasten/support/thread_worker'
 
 module Fasten
   class WorkerError < StandardError
@@ -16,9 +18,15 @@ module Fasten
     include Fasten::Support::Logger
     include Fasten::Support::State
 
-    attr_accessor :runner, :name, :spinner, :child_read, :child_write, :parent_read, :parent_write, :pid, :block, :running_task
+    attr_accessor :runner, :name, :spinner, :child_read, :child_write, :parent_read, :parent_write, :block, :running_task
 
-    def initialize(runner:, name: nil)
+    def initialize(runner:, name: nil, use_threads: nil)
+      if use_threads
+        extend Fasten::Support::ThreadWorker
+      else
+        extend Fasten::Support::ForkWorker
+      end
+
       self.runner = runner
       self.name = name
       self.spinner = 0
@@ -31,6 +39,16 @@ module Fasten
       perform_ruby(task) if task.ruby
       perform_block(task) if block
     end
+
+    def kind
+      'worker'
+    end
+
+    def to_s
+      name
+    end
+
+    protected
 
     def perform_ruby(task)
       task.response = eval task.ruby # rubocop:disable Security/Eval we trust our users ;-)
@@ -46,76 +64,10 @@ module Fasten
       task.response = block.call(task.request)
     end
 
-    def spawn
-      create_pipes
-
-      self.pid = Process.fork do
-        close_parent_pipes
-
-        process_incoming_requests
-      end
-
-      close_child_pipes
-    end
-
-    def send_request(task)
-      task.state = :RUNNING
-      task.worker = self
-      self.running_task = task
-      self.state = :RUNNING
-      Marshal.dump(task, parent_write)
-    end
-
-    def receive_response
-      updated_task = Marshal.load(parent_read) # rubocop:disable Security/MarshalLoad because pipe is a secure channel
-
-      %i[state ini fin dif response error].each { |key| running_task.send "#{key}=", updated_task.send(key) }
-
-      task = running_task
-      self.running_task = self.state = nil
-
-      task
-    end
-
-    def kill
-      log_info 'Removing worker'
-      Process.kill :KILL, pid
-    rescue StandardError => error
-      log_warn "Ignoring error killing worker #{self}, error: #{error}"
-    ensure
-      close_parent_pipes
-      close_child_pipes
-    end
-
-    def kind
-      'worker'
-    end
-
-    def to_s
-      name
-    end
-
-    protected
-
-    def create_pipes
-      self.child_read, self.parent_write = IO.pipe
-      self.parent_read, self.child_write = IO.pipe
-    end
-
-    def close_parent_pipes
-      parent_read.close unless parent_read.closed?
-      parent_write.close unless parent_write.closed?
-    end
-
-    def close_child_pipes
-      child_read.close unless child_read.closed?
-      child_write.close unless child_write.closed?
-    end
-
     def process_incoming_requests
       log_ini self, 'process_incoming_requests'
 
-      while (object = Marshal.load(child_read)) # rubocop:disable Security/MarshalLoad because pipe is a secure channel
+      while (object = receive_request_from_parent)
         run_task(object) if object.is_a? Fasten::Task
       end
 
@@ -126,7 +78,6 @@ module Fasten
 
     def run_task(task)
       log_ini task, 'run_task'
-      logger.reopen(STDOUT)
       redirect_std "#{runner.fasten_dir}/log/task/#{task.name}.log"
 
       perform_task task
@@ -146,14 +97,7 @@ module Fasten
       task.error = WorkerError.new(error)
     ensure
       log_fin task, 'perform_task'
-      send_response(task)
-    end
-
-    def send_response(task)
-      log_info "Sending task response back to runner #{task}"
-
-      data = Marshal.dump(task)
-      child_write.write(data)
+      send_response_to_parent(task)
     end
   end
 end

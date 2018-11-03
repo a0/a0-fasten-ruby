@@ -8,6 +8,7 @@ require 'fasten/support/state'
 require 'fasten/support/stats'
 require 'fasten/support/ui'
 require 'fasten/support/yaml'
+require 'fasten/timeout_queue'
 
 module Fasten
   class Runner
@@ -18,15 +19,16 @@ module Fasten
     include Fasten::Support::UI
     include Fasten::Support::Yaml
 
-    attr_accessor :name, :workers, :worker_class, :pid, :fasten_dir, :developer, :stats, :worker_list, :block
+    attr_accessor :name, :workers, :worker_class, :fasten_dir, :developer, :stats, :worker_list, :block, :use_threads, :queue
 
-    def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Worker, fasten_dir: '.fasten')
+    def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Worker, fasten_dir: '.fasten', use_threads: false)
       self.stats = name && true
       self.name = name || "#{self.class} #{$PID}"
       self.workers = workers
       self.worker_class = worker_class
       self.fasten_dir = fasten_dir
       self.developer = developer
+      self.use_threads = use_threads
 
       initialize_dag
       initialize_stats
@@ -106,22 +108,54 @@ module Fasten
     end
 
     def wait_for_running_tasks
+      use_threads ? wait_for_running_tasks_thread : wait_for_running_tasks_fork
+    end
+
+    def wait_for_running_tasks_thread
+      self.queue ||= TimeoutQueue.new
+
       while should_wait_for_running_tasks?
         ui.update
-        reads = worker_list.map(&:parent_read)
-        reads, _writes, _errors = IO.select(reads, [], [], 0.5)
 
-        receive_workers_tasks(reads)
+        tasks = queue.receive_with_timeout(0.5)
+
+        receive_workers_tasks_thread(tasks)
       end
 
       ui.update
     end
 
-    def receive_workers_tasks(reads)
+    def receive_workers_tasks_thread(tasks)
+      tasks&.each do |task|
+        logger.info "receive_workers_task_thread: #{task}"
+        task_running_list.delete task
+
+        task.worker.running_task = task.worker.state = nil
+
+        update_task task
+
+        log_fin task, done_counters
+        ui.force_clear
+      end
+    end
+
+    def wait_for_running_tasks_fork
+      while should_wait_for_running_tasks?
+        ui.update
+        reads = worker_list.map(&:parent_read)
+        reads, _writes, _errors = IO.select(reads, [], [], 0.5)
+
+        receive_workers_tasks_fork(reads)
+      end
+
+      ui.update
+    end
+
+    def receive_workers_tasks_fork(reads)
       reads&.each do |read|
         next unless (worker = worker_list.find { |item| item.parent_read == read })
 
-        task = worker.receive_response
+        task = worker.receive_response_from_child
 
         task_running_list.delete task
 
@@ -175,9 +209,9 @@ module Fasten
 
       unless worker
         @worker_id = (@worker_id || 0) + 1
-        worker = worker_class.new runner: self, name: "#{worker_class}-#{format '%02X', @worker_id}"
+        worker = worker_class.new runner: self, name: "#{worker_class}-#{format '%02X', @worker_id}", use_threads: use_threads
         worker.block = block
-        worker.spawn
+        worker.start
         worker_list << worker
 
         log_info "Worker created: #{worker}"
@@ -194,7 +228,7 @@ module Fasten
 
         task = next_task
         log_ini task, "on worker #{worker}"
-        worker.send_request(task)
+        worker.send_request_to_child(task)
         task_running_list << task
 
         ui.force_clear

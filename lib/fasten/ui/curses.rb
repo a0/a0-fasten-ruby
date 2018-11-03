@@ -129,7 +129,7 @@ module Fasten
         waiting_count = task_waiting_list.count
         workers_count = worker_list.count
 
-        "Procs: #{running_count} run #{workers_count - running_count} idle #{workers} max #{waiting_count} wait"
+        "Procs run: #{running_count} idle: #{workers_count - running_count} #{runner.use_threads ? 'threads' : 'workers'}: #{workers} wait: #{waiting_count}"
       end
 
       def ui_workers
@@ -231,7 +231,7 @@ module Fasten
         count_done = task_done_list.count
         count_total = task_list.count
         tl = count_total.to_s.length
-        col_ini = ui_text_aligned(2, :left, format("Tasks: %#{tl}d/%d", count_done, count_total)) + 1
+        col_ini = ui_text_aligned(2, :left, format("Tasks %#{tl}d/%d", count_done, count_total)) + 1
         col_fin = n_cols - 5
         ui_text_aligned(2, :right, "#{(count_done * 100 / count_total).to_i}%") if count_total.positive?
 

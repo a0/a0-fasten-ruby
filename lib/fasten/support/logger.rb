@@ -45,23 +45,6 @@ module Fasten
 
         log_info "Fin #{object.state} #{object.class} #{object} #{message} in #{object.dif}"
       end
-
-      def redirect_std(path)
-        @saved_stdout = $stdout.clone
-        @saved_stderr = $stderr.clone
-
-        FileUtils.mkdir_p File.dirname(path)
-        log = File.new path, 'a'
-        log.sync = true
-
-        $stdout.reopen log
-        $stderr.reopen log
-      end
-
-      def restore_std
-        $stdout.reopen(@saved_stdout)
-        $stderr.reopen(@saved_stderr)
-      end
     end
   end
 end
