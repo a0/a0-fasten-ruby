@@ -127,7 +127,6 @@ module Fasten
 
     def receive_workers_tasks_thread(tasks)
       tasks&.each do |task|
-        logger.info "receive_workers_task_thread: #{task}"
         task_running_list.delete task
 
         task.worker.running_task = task.worker.state = nil

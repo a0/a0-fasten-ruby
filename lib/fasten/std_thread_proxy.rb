@@ -4,19 +4,19 @@ module Fasten
       @original = original
     end
 
-    def respond_to?(symbol, include_private = false)
+    def respond_to?(name, include_private = false)
       target = Thread.current[:FASTEN_STD_THREAD_PROXY] || @original
-      target.respond_to? symbol, include_private
+      target.send :respond_to?, name, include_private
     end
 
     private
 
     def respond_to_missing?(name, include_private = false)
       target = Thread.current[:FASTEN_STD_THREAD_PROXY] || @original
-      target.respond_to_missing? name, include_private
+      target.send :respond_to_missing?, name, include_private
     end
 
-    def method_missing(method, *args, &block) # rubocop:disable Style/MethodMissingSuper
+    def method_missing(method, *args, &block) # rubocop:disable MethodMissingSuper
       target = Thread.current[:FASTEN_STD_THREAD_PROXY] || @original
       target.send method, *args, &block
     end
@@ -25,9 +25,14 @@ module Fasten
       def install
         return if @installed
 
+        oldverbose = $VERBOSE
+        $VERBOSE = nil
+        Object.const_set :STDOUT, StdThreadProxy.new(STDOUT)
+        Object.const_set :STDERR, StdThreadProxy.new(STDERR)
         $stdout = StdThreadProxy.new $stdout
         $stderr = StdThreadProxy.new $stderr
 
+        $VERBOSE = oldverbose
         @installed = true
       end
 

@@ -45,14 +45,14 @@ module Fasten
         StdThreadProxy.install
 
         FileUtils.mkdir_p File.dirname(path)
-        log = File.new path, 'a'
-        log.sync = true
-        StdThreadProxy.thread_io = log
-        logger.reopen(log)
+        @redirect_log = File.new path, 'a'
+        @redirect_log.sync = true
+        StdThreadProxy.thread_io = @redirect_log
+        logger.reopen(@redirect_log)
       end
 
       def restore_std
-        StdThreadProxy.thread_io&.close
+        @redirect_log&.close
         StdThreadProxy.thread_io = nil
         logger.reopen(log_file)
       end

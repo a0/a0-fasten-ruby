@@ -55,9 +55,11 @@ module Fasten
     end
 
     def perform_shell(task)
-      result = system task.shell
+      shell_pid = spawn task.shell, out: @redirect_log, err: @redirect_log
+      Process.wait shell_pid
+      result = $CHILD_STATUS
 
-      raise "Command failed with exit code: #{$CHILD_STATUS.exitstatus}" unless result
+      raise "Command failed with exit code: #{result.exitstatus}" unless result.exitstatus.zero?
     end
 
     def perform_block(task)

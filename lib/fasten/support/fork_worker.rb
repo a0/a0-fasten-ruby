@@ -86,8 +86,8 @@ module Fasten
       end
 
       def restore_std
-        $stdout.reopen(@saved_stdout)
-        $stderr.reopen(@saved_stderr)
+        $stdout = @saved_stdout
+        $stderr = @saved_stderr
         @redirect_log.close
       end
     end
