@@ -14,7 +14,8 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
     FileUtils.rm_rf Dir.glob('*.testfile')
     f = Fasten::Runner.new name: ex.description, workers: 100, use_threads: use_threads
     500.times do |index|
-      f.add Fasten::Task.new(name: index.to_s, shell: "sleep 0.2; touch #{index}.testfile")
+      shell = OS.windows? ? "ruby -e 'sleep 0.2; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep 0.2; touch #{index}.testfile"
+      f.add Fasten::Task.new(name: index.to_s, shell: shell)
     end
     f.perform
 
@@ -34,7 +35,8 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
       l[m] ||= {}
       l[m][n] ||= []
       key = "task-#{m}-#{n}-#{l[m][n].count + 1}"
-      l[m][n] << { task: key, after: nil, shell: "sleep 0.1; touch #{key}.testfile" }
+      shell = OS.windows? ? "ruby -e 'sleep 0.1; require \"fileutils\"; FileUtils.touch \"#{key}.testfile\"'" : "sleep 0.1; touch #{key}.testfile"
+      l[m][n] << { task: key, after: nil, shell: shell }
     end
 
     l.values.each do |value|
