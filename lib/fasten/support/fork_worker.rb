@@ -74,8 +74,10 @@ module Fasten
       def redirect_std(path)
         logger.reopen($stdout)
 
-        @saved_stdout = $stdout.clone
-        @saved_stderr = $stderr.clone
+        @saved_stdout_instance = $stdout.clone
+        @saved_stderr_instance = $stderr.clone
+        @saved_stdout_constant = STDOUT.clone
+        @saved_stderr_constant = STDERR.clone
 
         FileUtils.mkdir_p File.dirname(path)
         @redirect_log = File.new path, 'a'
@@ -83,11 +85,16 @@ module Fasten
 
         $stdout.reopen @redirect_log
         $stderr.reopen @redirect_log
+        STDOUT.reopen @redirect_log
+        STDERR.reopen @redirect_log
       end
 
       def restore_std
-        $stdout = @saved_stdout
-        $stderr = @saved_stderr
+        $stdout = @saved_stdout_instance
+        $stderr = @saved_stderr_instance
+        Object.const_set :STDOUT, @saved_stdout_constant
+        Object.const_set :STDERR, @saved_stderr_constant
+
         @redirect_log.close
       end
     end
