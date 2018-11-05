@@ -5,7 +5,8 @@ RSpec.shared_examples 'yaml' do |use_threads|
     f = Fasten.runner_from_yaml('spec/sample.ruby.yml', name: ex.description, use_threads: use_threads)
     expect(f.task_list.count).to eq(13)
 
-    f = Fasten.runner_from_yaml('spec/sample.shell.yml', name: ex.description, use_threads: use_threads)
+    file = OS.windows? ? 'spec/sample.win.yml' : 'spec/sample.shell.yml'
+    f = Fasten.runner_from_yaml(file, name: ex.description, use_threads: use_threads)
     expect(f.task_list.count).to eq(13)
   end
 
@@ -23,7 +24,8 @@ RSpec.shared_examples 'yaml' do |use_threads|
 
   it "using #{process_model}, can perform a YAML file with shell code" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
-    f = Fasten.runner_from_yaml('spec/sample.shell.yml', name: ex.description, use_threads: use_threads)
+    file = OS.windows? ? 'spec/sample.win.yml' : 'spec/sample.shell.yml'
+    f = Fasten.runner_from_yaml(file, name: ex.description, use_threads: use_threads)
     f.perform
 
     files = Dir['*.testfile']

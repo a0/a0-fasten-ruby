@@ -5,7 +5,8 @@ RSpec.shared_examples 'ui' do |use_threads|
     f = Fasten::Runner.new name: ex.description, workers: 1, use_threads: use_threads
 
     500.times do |index|
-      f.add Fasten::Task.new name: "t-#{index}", shell: 'sleep 0.01'
+      shell = OS.windows? ? "ruby -e 'sleep 0.1'" : "sleep 0.01"
+      f.add Fasten::Task.new name: "t-#{index}", shell: shell
     end
 
     f.perform

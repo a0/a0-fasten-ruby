@@ -1,0 +1,55 @@
+---
+clean:
+  shell: |
+    ruby -e 'puts "$$ running clean…"; sleep 0.5; require "fileutils"; FileUtils.touch "clean.testfile"; puts "$$ ok clean."'
+env-setup:
+  shell: |
+    ruby -e 'puts "$$ running env-setup…"; sleep 1; require "fileutils"; FileUtils.touch "env-setup.testfile"; puts "$$ ok env-setup."'
+db-setup-1:
+  after:
+    - db-update
+    - compile-1
+  shell: |
+    ruby -e 'puts "$$ running db-setup-1…"; sleep 1.5; require "fileutils"; FileUtils.touch "db-setup-1.testfile"; puts "$$ ok db-setup-1."'
+db-setup-2:
+  after: db-update
+  shell: |
+    ruby -e 'puts "$$ running db-setup-2…"; sleep 2; require "fileutils"; FileUtils.touch "db-setup-2.testfile"; puts "$$ ok db-setup-2."'
+db-update:
+  after:
+    - db-sync
+    - db-reset
+  shell: |
+    ruby -e 'puts "$$ running db-update…"; sleep 2.5; require "fileutils"; FileUtils.touch "db-update.testfile"; puts "$$ ok db-update."'
+db-reset:
+  after: env-setup
+  shell: |
+    ruby -e 'puts "$$ running db-reset…"; sleep 3; require "fileutils"; FileUtils.touch "db-reset.testfile"; puts "$$ ok db-reset."'
+db-sync:
+  after: env-setup
+  shell: |
+    ruby -e 'puts "$$ running db-sync…"; sleep 3.5; require "fileutils"; FileUtils.touch "db-sync.testfile"; puts "$$ ok db-sync."'
+fs-sync-1:
+  after: env-setup
+  shell: |
+    ruby -e 'puts "$$ running fs-sync-1…"; sleep 4; require "fileutils"; FileUtils.touch "fs-sync-1.testfile"; puts "$$ ok fs-sync-1."'
+fs-sync-2:
+  after: env-setup
+  shell: |
+    ruby -e 'puts "$$ running fs-sync-2…"; sleep 4.5; require "fileutils"; FileUtils.touch "fs-sync-2.testfile"; puts "$$ ok fs-sync-2."'
+compile-1:
+  after: env-setup
+  shell: |
+    ruby -e 'puts "$$ running compile-1…"; sleep 5; require "fileutils"; FileUtils.touch "compile-1.testfile"; puts "$$ ok compile-1."'
+compile-2:
+  after: env-setup
+  shell: |
+    ruby -e 'puts "$$ running compile-2…"; sleep 5.5; require "fileutils"; FileUtils.touch "compile-2.testfile"; puts "$$ ok compile-2."'
+compile-3:
+  after: env-setup
+  shell: |
+    ruby -e 'puts "$$ running compile-3…"; sleep 6; require "fileutils"; FileUtils.touch "compile-3.testfile"; puts "$$ ok compile-3."'
+version:
+  after: env-setup
+  shell: |
+    ruby -e 'puts "$$ running version…"; sleep 6.5; require "fileutils"; FileUtils.touch "version.testfile"; puts "$$ ok version."'
