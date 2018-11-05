@@ -1,5 +1,7 @@
-RSpec.describe Fasten do
-  it 'simple dsl' do |ex|
+RSpec.shared_examples 'dsl' do |use_threads|
+  process_model = use_threads ? 'threads' : 'processes'
+
+  it "using #{process_model}, runs a simple dsl" do |ex|
     class MyWorker < Fasten::Worker
       def do_sum(*args)
         puts "do_sum: #{args}"
@@ -7,21 +9,26 @@ RSpec.describe Fasten do
       end
     end
 
-    Fasten.register name: ex.description, worker_class: MyWorker, use_threads: false do
-      task 'probando' do
+    Fasten.cleanup
+    Fasten.register name: ex.description, worker_class: MyWorker, use_threads: use_threads do
+      task 'starting' do
         result = do_sum 5, 6
-        puts "probando: #{result}!"
+        puts "starting: #{result}!"
         result
       end
 
-      task 'terminando', after: 'probando' do
+      task 'finishing', after: 'starting' do
         result = do_sum 7, 8
-        puts "terminando: #{result}."
+        puts "finishing: #{result}."
         result
       end
 
       perform
-      stats_table
     end
   end
+end
+
+RSpec.describe Fasten do
+  it_behaves_like 'dsl', false if OS.posix?
+  it_behaves_like 'dsl', true
 end
