@@ -4,12 +4,14 @@ module Fasten
       attr_reader :task_map, :task_list, :task_done_list, :task_error_list, :task_pending_list, :task_running_list
 
       def initialize_dag
-        @task_map = {}
-        @task_list = []
-        @task_done_list = []
-        @task_error_list = []
-        @task_pending_list = []
-        @task_running_list = []
+        @task_map ||= {}
+        @task_list ||= []
+        @task_done_list ||= []
+        @task_error_list ||= []
+        @task_pending_list ||= []
+        @task_running_list ||= []
+
+        nil
       end
 
       def add(task)

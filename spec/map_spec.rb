@@ -2,8 +2,9 @@ RSpec.shared_examples 'map functionality' do |use_threads|
   process_model = use_threads ? 'threads' : 'processes'
 
   it "using #{process_model}, Fasten.map works as expected" do |ex|
-    items = (1..1000).to_a
+    items = (1..100).to_a
 
+    Fasten.cleanup
     result = Fasten.map items, name: ex.description, developer: false, use_threads: use_threads do |item|
       item * item
     end
@@ -16,7 +17,7 @@ RSpec.shared_examples 'map functionality' do |use_threads|
   end
 
   it "using #{process_model}, fasten_instance.map works as expected" do |ex|
-    items = (1..1000).to_a
+    items = (1..100).to_a
 
     f = Fasten::Runner.new name: ex.description, developer: false, use_threads: use_threads
 

@@ -18,7 +18,7 @@ module Fasten
     include Fasten::Support::Logger
     include Fasten::Support::State
 
-    attr_accessor :runner, :name, :spinner, :child_read, :child_write, :parent_read, :parent_write, :block, :running_task
+    attr_accessor :runner, :name, :spinner, :child_read, :child_write, :parent_read, :parent_write, :running_task
 
     def initialize(runner:, name: nil, use_threads: nil)
       if use_threads
@@ -35,9 +35,13 @@ module Fasten
     end
 
     def perform(task)
-      perform_shell(task) if task.shell
-      perform_ruby(task) if task.ruby
-      perform_block(task) if block
+      if task.ruby
+        perform_ruby(task)
+      elsif task.shell
+        perform_shell(task)
+      elsif task.block
+        perform_block(task, task.block)
+      end
     end
 
     def kind
@@ -62,8 +66,8 @@ module Fasten
       raise "Command failed with exit code: #{result.exitstatus}" unless result.exitstatus.zero?
     end
 
-    def perform_block(task)
-      task.response = block.call(task.request)
+    def perform_block(task, block)
+      task.response = instance_exec task.request, &block
     end
 
     def process_incoming_requests

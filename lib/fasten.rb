@@ -15,7 +15,23 @@ module Fasten
     end
 
     def map(list, **options, &block)
-      Fasten::Runner.new(**options).map(list, &block)
+      runner(**options).map(list, &block)
+    end
+
+    def runner(**options)
+      @runner ||= Fasten::Runner.new(**options)
+    end
+
+    def cleanup
+      @runner = nil
+    end
+
+    def reconfigure(**options)
+      runner.reconfigure(**options)
+    end
+
+    def register(**options, &block)
+      runner(**options).register(&block)
     end
   end
 end

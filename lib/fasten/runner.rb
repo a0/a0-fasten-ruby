@@ -20,22 +20,34 @@ module Fasten
     include Fasten::Support::UI
     include Fasten::Support::Yaml
 
-    attr_accessor :name, :workers, :worker_class, :fasten_dir, :developer, :stats, :worker_list, :block, :use_threads, :queue
+    attr_accessor :name, :workers, :worker_class, :fasten_dir, :developer, :stats, :worker_list, :use_threads, :queue
 
     def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Worker, fasten_dir: '.fasten', use_threads: !OS.posix?)
-      self.stats = name && true
-      self.name = name || "#{self.class} #{$PID}"
-      self.workers = workers
-      self.worker_class = worker_class
-      self.fasten_dir = fasten_dir
-      self.developer = developer
-      self.use_threads = use_threads
+      reconfigure(name: name, developer: developer, workers: workers, worker_class: worker_class, fasten_dir: fasten_dir, use_threads: use_threads)
+    end
+
+    def reconfigure(**options)
+      self.stats = options[:name] && true if options[:name]
+      self.name = options[:name] || "#{self.class} #{$PID}" if options[:name]
+      self.workers = options[:workers] if options[:workers]
+      self.worker_class = options[:worker_class] if options[:worker_class]
+      self.fasten_dir = options[:fasten_dir] if options[:fasten_dir]
+      self.developer = options[:developer] if options[:developer]
+      self.use_threads = options[:use_threads] if options[:use_threads]
 
       initialize_dag
       initialize_stats
       initialize_logger
 
-      self.worker_list = []
+      self.worker_list ||= []
+    end
+
+    def task(name, after: nil, &block)
+      add Task.new(name: name, after: after, block: block)
+    end
+
+    def register(&block)
+      instance_eval(&block)
     end
 
     def perform
@@ -56,10 +68,8 @@ module Fasten
     end
 
     def map(list, &block)
-      self.block = block
-
       list.each do |item|
-        add Fasten::Task.new name: item.to_s, request: item
+        add Fasten::Task.new name: item.to_s, request: item, block: block
       end
 
       perform
@@ -209,7 +219,6 @@ module Fasten
       unless worker
         @worker_id = (@worker_id || 0) + 1
         worker = worker_class.new runner: self, name: "#{worker_class}-#{format '%02X', @worker_id}", use_threads: use_threads
-        worker.block = block
         worker.start
         worker_list << worker
 
