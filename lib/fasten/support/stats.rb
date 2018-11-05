@@ -28,8 +28,6 @@ module Fasten
         @task_waiting_list = nil
       rescue StandardError
         nil
-      ensure
-        self.stats ||= {}
       end
 
       def save_stats
@@ -47,12 +45,12 @@ module Fasten
       end
 
       def stats_create_entry(state, target)
-        { 'state' => state.to_s,
-          'kind'  => target.kind,
-          'name'  => target.name,
-          'ini'   => target.ini.to_f,
-          'fin'   => target.fin.to_f,
-          'run'   => target.fin - target.ini,
+        { 'state'  => state.to_s,
+          'kind'   => target.kind,
+          'name'   => target.name,
+          'ini'    => target.ini.to_f,
+          'fin'    => target.fin.to_f,
+          'run'    => target.fin - target.ini,
           'worker' => target.respond_to?(:worker) ? target.worker.name : nil }
       end
 

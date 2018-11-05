@@ -90,12 +90,17 @@ module Fasten
       end
 
       def restore_std
+        oldverbose = $VERBOSE
+        $VERBOSE = nil
+
         $stdout = @saved_stdout_instance
         $stderr = @saved_stderr_instance
         Object.const_set :STDOUT, @saved_stdout_constant
         Object.const_set :STDERR, @saved_stderr_constant
 
         @redirect_log.close
+      ensure
+        $VERBOSE = oldverbose
       end
     end
   end

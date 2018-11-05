@@ -27,13 +27,15 @@ module Fasten
 
         oldverbose = $VERBOSE
         $VERBOSE = nil
+
         Object.const_set :STDOUT, StdThreadProxy.new(STDOUT)
         Object.const_set :STDERR, StdThreadProxy.new(STDERR)
         $stdout = StdThreadProxy.new $stdout
         $stderr = StdThreadProxy.new $stderr
 
-        $VERBOSE = oldverbose
         @installed = true
+      ensure
+        $VERBOSE = oldverbose
       end
 
       def thread_io=(io)

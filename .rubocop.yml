@@ -14,3 +14,7 @@ Metrics/AbcSize:
   Max: 17
 Metrics/MethodLength:
   Max: 15
+Metrics/ParameterLists:
+  Max: 6
+Layout/AlignHash:
+  EnforcedHashRocketStyle: table
