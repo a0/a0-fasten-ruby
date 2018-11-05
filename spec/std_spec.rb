@@ -22,7 +22,7 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
 
     f = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}"}.each do |name|
-      f.add Fasten::Task.new name: name, shell: "echo SHELL STDERR ES #{name} >&2"
+      f.add Fasten::Task.new name: name, shell: "echo SHELL STDERR ES #{name}>&2"
     end
 
     f.perform
