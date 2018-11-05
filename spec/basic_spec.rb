@@ -12,7 +12,7 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
     f.perform
   end
 
-  it "using #{process_model}, performs 500 tasks with 100 workers, without dependencies" do |ex|
+  it "using #{process_model}, performs #{max} tasks with 100 workers, without dependencies" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
     f = Fasten::Runner.new name: ex.description, workers: 100, use_threads: use_threads
     max.times do |index|
@@ -28,7 +28,7 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
     expect(files.sort).to eq(items.sort)
   end
 
-  it "using #{process_model}, performs 500 tasks with 5 workers, including dependencies" do |ex|
+  it "using #{process_model}, performs #{max} tasks with 5 workers, including dependencies" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
     l = {}
     max.times do
