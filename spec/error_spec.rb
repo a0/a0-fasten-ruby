@@ -1,12 +1,14 @@
 RSpec.shared_examples 'error handling' do |use_threads|
   process_model = use_threads ? 'threads' : 'processes'
 
+  max = OS.windows? ? 10 : 100
+
   it "using #{process_model}, early stop in case of failure" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
 
     f = Fasten::Runner.new name: ex.description, workers: 1, worker_class: ErrorWorker, developer: false, use_threads: use_threads
 
-    100.times do |index|
+    max.times do |index|
       shell = OS.windows? ? "ruby -e 'sleep 0.05; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep 0.05; touch #{index}.testfile"
       f.add Fasten::Task.new name: index.to_s, shell: shell
     end
@@ -23,7 +25,7 @@ RSpec.shared_examples 'error handling' do |use_threads|
 
     f = Fasten::Runner.new name: ex.description, workers: 10, worker_class: ErrorWorker, developer: false, use_threads: use_threads
 
-    100.times do |index|
+    max.times do |index|
       shell = OS.windows? ? "ruby -e 'sleep 0.3; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep 0.3; touch #{index}.testfile"
       f.add Fasten::Task.new name: index.to_s, shell: shell
     end

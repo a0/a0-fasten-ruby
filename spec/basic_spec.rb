@@ -1,6 +1,8 @@
 RSpec.shared_examples 'basic funcionality' do |use_threads|
   process_model = use_threads ? 'threads' : 'processes'
 
+  max = OS.windows? ? 10 : 500
+
   it "using #{process_model}, has a version number" do
     expect(Fasten::VERSION).not_to be nil
   end
@@ -13,7 +15,7 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
   it "using #{process_model}, performs 500 tasks with 100 workers, without dependencies" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
     f = Fasten::Runner.new name: ex.description, workers: 100, use_threads: use_threads
-    500.times do |index|
+    max.times do |index|
       shell = OS.windows? ? "ruby -e 'sleep 0.2; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep 0.2; touch #{index}.testfile"
       f.add Fasten::Task.new(name: index.to_s, shell: shell)
     end
@@ -29,7 +31,7 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
   it "using #{process_model}, performs 500 tasks with 5 workers, including dependencies" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
     l = {}
-    500.times do
+    max.times do
       m = rand(65..90).chr
       n = rand(97..122).chr
       l[m] ||= {}
