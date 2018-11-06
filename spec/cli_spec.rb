@@ -3,7 +3,7 @@ RSpec.shared_examples 'cli' do |use_threads|
 
   it "using #{process_model}, runs a _fasten file" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
-    `ruby exe/fasten --#{process_model} --name '#{ex}' spec`
+    `ruby exe/fasten --#{process_model} --name '#{ex.description}' spec`
     files = Dir['*.testfile']
 
     Fasten.cleanup
