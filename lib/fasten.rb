@@ -63,7 +63,7 @@ module Fasten
         opts.separator ''
         opts.separator 'Options'
 
-        opts.on '-n', '--name NAME', String, "Name of this job" do |name|
+        opts.on '-n', '--name NAME', String, 'Name of this runner, used to display and save stats' do |name|
           @options[:name] = name
         end
         opts.on '-w', '--workers WORKERS', Numeric, "Number of processes/threads to use (#{Parallel.physical_processor_count} on this machine)" do |workers|
