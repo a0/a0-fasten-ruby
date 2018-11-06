@@ -27,7 +27,7 @@ module Fasten
     end
 
     def reconfigure(**options)
-      self.stats = options[:name] && true if options[:name]
+      self.stats = options[:name] && true if options[:name] || options.key?(:stats)
       self.name = options[:name] || "#{self.class} #{$PID}" if options[:name]
       self.workers = options[:workers] if options[:workers]
       self.worker_class = options[:worker_class] if options[:worker_class]
@@ -42,8 +42,8 @@ module Fasten
       self.worker_list ||= []
     end
 
-    def task(name, after: nil, &block)
-      add Task.new(name: name, after: after, block: block)
+    def task(name, **opts, &block)
+      add Task.new(name: name, **opts, block: block)
     end
 
     def register(&block)
