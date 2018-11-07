@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    fasten (0.6.0)
+    fasten (0.7.0)
       binding_of_caller
       hirb
       os
