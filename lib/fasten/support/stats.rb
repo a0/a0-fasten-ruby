@@ -76,7 +76,7 @@ module Fasten
 
       FLOAT_FORMATTER = ->(f) { format('%7.3f', f) }
 
-      def stats_table_run
+      def stats_summary_data
         sub = stats_entries.select { |x| x['kind'] == 'task' }.map { |x| x['run'] }.sum
         tot = stats_entries.select { |x| x['kind'] == 'runner' }.map { |x| x['run'] }.sum
 
@@ -104,8 +104,8 @@ module Fasten
         str
       end
 
-      def stats_table
-        sub, tot = stats_table_run
+      def stats_summary
+        sub, tot = stats_summary_data
 
         Hirb::Console.render_output(stats_entries,
                                     fields: %w[state kind name run cnt avg std err worker], unicode: true, class: 'Hirb::Helpers::AutoTable',

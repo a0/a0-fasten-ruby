@@ -5,7 +5,12 @@ module Fasten
     module UI
       def ui
         require 'fasten/ui/curses'
-        @ui ||= STDIN.tty? && STDOUT.tty? ? Fasten::UI::Curses.new(runner: self) : Fasten::UI::Console.new(runner: self)
+
+        @ui ||= if ui_mode.to_s == 'curses' && STDIN.tty? && STDOUT.tty?
+                  Fasten::UI::Curses.new(runner: self)
+                else
+                  Fasten::UI::Console.new(runner: self)
+                end
       rescue StandardError, LoadError
         @ui = Fasten::UI::Console.new(runner: self)
       end

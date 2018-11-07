@@ -35,6 +35,24 @@ module Fasten
       runner(**options).register(&block)
     end
 
+    def default_workers
+      Parallel.physical_processor_count
+    end
+
+    def default_developer
+      STDIN.tty? && STDOUT.tty?
+    end
+
+    def default_ui_mode
+      return @default_ui_mode if defined? @default_ui_mode
+
+      require 'fasten/ui/curses'
+
+      @default_ui_mode = :curses
+    rescue StandardError, LoadError
+      @default_ui_mode = :console
+    end
+
     def load_fasten(args)
       args.each do |path|
         if File.directory? path
@@ -61,25 +79,33 @@ module Fasten
       @opt_parser = OptionParser.new do |opts|
         opts.banner = "Usage: #{$PROGRAM_NAME} [options] FILE/DIRECTORY"
         opts.separator ''
-        opts.separator 'Options'
+        opts.separator 'Example: fasten --name deploy --summary deploy_script.rb'
+        opts.separator ''
+        opts.separator 'Options:'
 
-        opts.on '-n', '--name NAME', String, 'Name of this runner, used to display and save stats' do |name|
+        opts.on '-n NAME', '--name=NAME', String, 'Name of this runner, used to display and save stats' do |name|
           @options[:name] = name
         end
-        opts.on '-w', '--workers WORKERS', Numeric, "Number of processes/threads to use (#{Parallel.physical_processor_count} on this machine)" do |workers|
+        opts.on '-w WORKERS', '--workers=WORKERS', Numeric, "Number of processes/threads to use (default: #{default_workers} on this machine)" do |workers|
           @options[:workers] = workers
         end
-        opts.on '-t', '--threads' do
+        opts.on '-s', '--[no-]summary', TrueClass, 'Display summary at the end of execution' do |boolean|
+          @options[:summary] = boolean
+        end
+        opts.on '--ui=UI', String, "Type of UI: curses, console. (default: #{default_ui_mode} on this machine)" do |ui_mode|
+          @options[:ui_mode] = ui_mode
+        end
+        opts.on '-t', '--threads', 'Use threads workers for parallel execution' do
           @options[:use_threads] = true
         end
-        opts.on '-p', '--processes' do
+        opts.on '-p', '--processes', 'Use process workers for parallel execution' do
           @options[:use_threads] = false
         end
-        opts.on '-v', '--version' do
+        opts.on '-v', '--version', 'Display version info' do
           puts Fasten::VERSION
           exit 0
         end
-        opts.on_tail '-h', '--help' do
+        opts.on_tail '-h', '--help', 'Shows this help' do
           puts opts
           exit 0
         end

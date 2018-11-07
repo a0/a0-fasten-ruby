@@ -20,20 +20,25 @@ module Fasten
     include Fasten::Support::UI
     include Fasten::Support::Yaml
 
-    attr_accessor :name, :workers, :worker_class, :fasten_dir, :developer, :stats, :worker_list, :use_threads, :queue
+    attr_accessor :name, :workers, :worker_class, :fasten_dir, :developer, :stats, :summary, :ui_mode, :worker_list, :use_threads, :queue
 
-    def initialize(name: nil, developer: STDIN.tty? && STDOUT.tty?, workers: Parallel.physical_processor_count, worker_class: Worker, fasten_dir: '.fasten', use_threads: !OS.posix?)
-      reconfigure(name: name, developer: developer, workers: workers, worker_class: worker_class, fasten_dir: fasten_dir, use_threads: use_threads)
+    def initialize(name: nil,
+                   developer: Fasten.default_developer, summary: nil, ui_mode: Fasten.default_ui_mode, workers: Fasten.default_workers,
+                   worker_class: Worker, fasten_dir: '.fasten', use_threads: !OS.posix?)
+      reconfigure(name: name, developer: developer, summary: summary, ui_mode: ui_mode, workers: workers,
+                  worker_class: worker_class, fasten_dir: fasten_dir, use_threads: use_threads)
     end
 
     def reconfigure(**options)
-      self.stats = options[:name] && true if options[:name] || options.key?(:stats)
-      self.name = options[:name] || "#{self.class} #{$PID}" if options[:name]
-      self.workers = options[:workers] if options[:workers]
-      self.worker_class = options[:worker_class] if options[:worker_class]
-      self.fasten_dir = options[:fasten_dir] if options[:fasten_dir]
-      self.developer = options[:developer] if options[:developer]
-      self.use_threads = options[:use_threads] if options[:use_threads]
+      self.stats        = options[:name] && true if options[:name] || options.key?(:stats)
+      self.name         = options[:name] || "#{self.class} #{$PID}" if options.key?(:name)
+      self.workers      = options[:workers]       if options.key?(:workers)
+      self.worker_class = options[:worker_class]  if options.key?(:worker_class)
+      self.fasten_dir   = options[:fasten_dir]    if options.key?(:fasten_dir)
+      self.developer    = options[:developer]     if options.key?(:developer)
+      self.use_threads  = options[:use_threads]   if options.key?(:use_threads)
+      self.summary      = options[:summary]       if options.key?(:summary)
+      self.ui_mode      = options[:ui_mode]       if options.key?(:ui_mode)
 
       initialize_dag
       initialize_stats
@@ -63,6 +68,8 @@ module Fasten
       log_fin self, running_counters
 
       stats_add_entry(state, self)
+
+      stats_summary if summary
     ensure
       save_stats
     end
