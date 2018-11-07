@@ -1,24 +1,57 @@
-# Fasten your seatbelts!
+# Fasten your seatbelts! 💺💺💺💺
 
-FIXME: Add intro here
+Run ruby code, shell code, or customized tasks in parallel using worker processes/threads. You can dynamically pause/continue/increase/decrease the number of tasks using our UI.
 
-## Roadmap
+![](demo/demo.gif)
 
-- [x] define task to be run to reach a goal, with dependencies (similar to rake, make, and others)
-- [x] run task in parallel by default
-- [x] dynamicly change the number of worker processes
-- [x] allow to programatically define new tasks
-- [ ] allow to programatically redefine existing tasks
-- [x] keep each task log in a separate file, to easily debug errors
-- [x] early stop in case of failure
-- [x] for non-tty execution, report with a simple progress log in STDOUT
-- [ ] calculate ETA of script, based on previos executions of the same script
-- [ ] calculate ETA without previous information
-- [ ] for tty execution: start in background and provide a curses interface. When quit, the background process will keep running
-- [ ] provide a cli for running simple tasks
-- [x] provide a curses mode that displays number of workers, running tasks, remaining tasks, etc. Curses mode is the default.
-- [ ] display ETA in curses mode
-- [ ] curses mode can control (pause/stop/resume) other running executions
+**WARNING** this is a Work In Progress project:
+- features are still being implemented
+- API could and will change
+
+It has been released so people can try it and make feature requests, comments and suggestions.
+
+## Feature Roadmap
+
+### Task definitions:
+- [x] define tasks from an YAML file
+- [x] tasks definition can include shell code or eval'ed ruby code
+- [x] tasks can also be defined with blocks of code, like RSpec.describe
+- [x] tasks can have dependencies that are needed to reach a goal, similar to rake, make, and others
+
+### Execution:
+- [x] tasks are executed in parallel, using worker processes/threads
+- [x] process are preferred on POSIX systems, otherwise threads are used
+- [x] default number of workers is the # of real cpu cores on the system
+- [x] in case of task Error or Exception, the whole run will be stopped
+- [x] runner saves a log file in `$(pwd)/.fasten/log/runner/*name_of_runner*.log`
+- [x] each task saves its STDERR/STDOUT to a log file in `$(pwd)/.fasten/log/task/*name_of_task*.log`
+- [x] once finished, statistics are saved in `$HOME/.fasten/stats/*name_of_runner*.csv`, which include: status (DONE, FAIL), duration, average, stdev, error and count
+- [x] display a summary table of the execution
+
+### UI/Curses
+- [x] only available if the 'curses' gem is installed
+- [x] Display number of workers running, idle, waiting, and number of workers (max)
+- [x] Display current running tasks, pending tasks, waiting tasks, etc; showing which task is pending because other tasks need to be run first
+- [x] Display the number of tasks done/pending
+- [x] Display a progressbar
+- [x] Display current local time
+- [x] Pause whole runner with `P` key (waits current running tasks end)
+- [x] Resume paused runner with `R` key
+- [x] Press ⬅️ or ➡️ keys to dynamically increase/decrease number of workers
+- [ ] Use ⬆️ and ⬇️ to select tasks
+- [ ] Calculate ETA, assuming all tasks take same time
+- [ ] Calculate ETA, based on saved tasks statistics
+- [ ] Live tail -f of selected tasks
+
+### UI/Console
+- [x] Console is the default if STDOUT/STDIN is not a tty
+- [x] Display each task as is being finished
+- [ ] Calculate ETA, assuming all tasks take same time
+- [ ] Calculate ETA, based on saved tasks statistics
+
+
+### CLI
+- [x] provides a CLI for running *_fasten.rb ruby code
 
 
 ## Installation
@@ -27,6 +60,7 @@ Add this line to your application's Gemfile:
 
 ```ruby
 gem 'fasten'
+gem 'curses' # optional
 ```
 
 And then execute:
@@ -39,7 +73,7 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+TODO: Write usage instructions here. See spec for sample code.
 
 ## Development
 
