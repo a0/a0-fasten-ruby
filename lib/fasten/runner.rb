@@ -31,7 +31,7 @@ module Fasten
 
     def reconfigure(**options)
       self.stats        = options[:name] && true if options[:name] || options.key?(:stats)
-      self.name         = options[:name] || "#{self.class} #{$PID}" if options.key?(:name)
+      self.name         = options[:name] || "#{self.class.to_s.gsub('::', '-')}-#{$PID}" if options.key?(:name)
       self.workers      = options[:workers]       if options.key?(:workers)
       self.worker_class = options[:worker_class]  if options.key?(:worker_class)
       self.fasten_dir   = options[:fasten_dir]    if options.key?(:fasten_dir)
@@ -225,7 +225,7 @@ module Fasten
 
       unless worker
         @worker_id = (@worker_id || 0) + 1
-        worker = worker_class.new runner: self, name: "#{worker_class}-#{format '%02X', @worker_id}", use_threads: use_threads
+        worker = worker_class.new runner: self, name: "#{worker_class.to_s.gsub('::', '-')}-#{format '%02X', @worker_id}", use_threads: use_threads
         worker.start
         worker_list << worker
 
