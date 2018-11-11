@@ -12,7 +12,7 @@ module Fasten
                   Fasten::UI::Console.new(runner: self)
                 end
       rescue StandardError, LoadError
-        @ui = Fasten::UI::Console.new(runner: self)
+        @ui ||= Fasten::UI::Console.new(runner: self)
       end
 
       def run_ui
