@@ -23,8 +23,8 @@ It has been released so people can try it and make feature requests, comments an
 - [x] process are preferred on POSIX systems, otherwise threads are used
 - [x] default number of workers is the # of real cpu cores on the system
 - [x] in case of task Error or Exception, the whole run will be stopped
-- [x] runner saves a log file in `$(pwd)/.fasten/log/runner/*name_of_runner*.log`
-- [x] each task saves its STDERR/STDOUT to a log file in `$(pwd)/.fasten/log/task/*name_of_task*.log`
+- [x] runner saves a log file in `$(pwd)/fasten/log/runner/*name_of_runner*.log`
+- [x] each task saves its STDERR/STDOUT to a log file in `$(pwd)/fasten/log/task/*name_of_task*.log`
 - [x] once finished, statistics are saved in `$HOME/.fasten/stats/*name_of_runner*.csv`, which include: status (DONE, FAIL), duration, average, stdev, error and count
 - [x] display a summary table of the execution
 

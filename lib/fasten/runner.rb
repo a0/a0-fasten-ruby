@@ -24,7 +24,7 @@ module Fasten
 
     def initialize(name: nil,
                    developer: Fasten.default_developer, summary: nil, ui_mode: Fasten.default_ui_mode, workers: Fasten.default_workers,
-                   worker_class: Worker, fasten_dir: '.fasten', use_threads: !OS.posix?)
+                   worker_class: Worker, fasten_dir: 'fasten', use_threads: !OS.posix?)
       reconfigure(name: name, developer: developer, summary: summary, ui_mode: ui_mode, workers: workers,
                   worker_class: worker_class, fasten_dir: fasten_dir, use_threads: use_threads)
     end
