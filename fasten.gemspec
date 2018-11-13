@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = 'Fasten your seatbelts! Run jobs in parallel, intelligently.'
   spec.description   = 'Fasten your seatbelts! Run jobs in parallel, intelligently.'
-  spec.homepage      = 'https://github.com/a0/fasten/'
+  spec.homepage      = 'https://github.com/a0/a0-fasten-ruby/'
   spec.license       = 'MIT'
 
   # Specify which files should be added to the gem when it is released.
