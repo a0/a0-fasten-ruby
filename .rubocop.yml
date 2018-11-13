@@ -10,6 +10,16 @@ Metrics/BlockLength:
     - 'Rakefile'
     - '**/*.rake'
     - 'spec/**/*.rb'
+    - 'fasten.gemspec'
+Metrics:
+  Exclude:
+    - 'lib/fasten/ui/curses.rb'
+Naming:
+  Exclude:
+    - 'lib/fasten/ui/curses.rb'
+Style:
+  Exclude:
+    - 'lib/fasten/ui/curses.rb'
 Metrics/AbcSize:
   Max: 17
 Metrics/MethodLength:
