@@ -22,7 +22,7 @@ module Fasten
 
     attr_accessor :name, :workers, :worker_class, :fasten_dir, :developer, :stats, :summary, :ui_mode, :worker_list, :use_threads, :queue
 
-    def initialize(name: nil,
+    def initialize(name: Fasten.default_name,
                    developer: Fasten.default_developer, summary: nil, ui_mode: Fasten.default_ui_mode, workers: Fasten.default_workers,
                    worker_class: Worker, fasten_dir: 'fasten', use_threads: !OS.posix?)
       reconfigure(name: name, developer: developer, summary: summary, ui_mode: ui_mode, workers: workers,

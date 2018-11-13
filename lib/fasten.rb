@@ -35,6 +35,10 @@ module Fasten
       runner(**options).register(&block)
     end
 
+    def default_name
+      File.basename(Dir.getwd)
+    end
+
     def default_workers
       Parallel.physical_processor_count
     end
@@ -75,21 +79,29 @@ module Fasten
       return @opt_parser if defined? @opt_parser
 
       @options = { developer: false }
+      @load_path = []
 
       @opt_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: #{$PROGRAM_NAME} [options] FILE/DIRECTORY"
+        opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
         opts.separator ''
-        opts.separator 'Example: fasten --name deploy --summary deploy_script.rb'
+        opts.separator 'Examples:'
+        opts.separator '    fasten              # load and run all task from fasten/*_fasten.rb'
+        opts.separator '    fasten -f tasks.rb  # load task from ruby script'
+        opts.separator '    fasten -y tasks.yml # load task from yaml file'
         opts.separator ''
         opts.separator 'Options:'
 
-        opts.on '-n NAME', '--name=NAME', String, 'Name of this runner, used to display and save stats' do |name|
+        opts.on '-n NAME', '--name=NAME', String, "Change name of this runner (default: #{default_name} from current directory)" do |name|
           @options[:name] = name
+        end
+        opts.on '-f PATH', '--file=PATH', String, 'File or folder with ruby code' do |path|
+          @load_path << path
         end
         opts.on '-w WORKERS', '--workers=WORKERS', Numeric, "Number of processes/threads to use (default: #{default_workers} on this machine)" do |workers|
           @options[:workers] = workers
         end
         opts.on '-s', '--[no-]summary', TrueClass, 'Display summary at the end of execution' do |boolean|
+          puts "SUMMAMRY: #{boolean}"
           @options[:summary] = boolean
         end
         opts.on '--ui=UI', String, "Type of UI: curses, console. (default: #{default_ui_mode} on this machine)" do |ui_mode|
@@ -120,10 +132,10 @@ module Fasten
     def invoke
       opt_parser.parse!
 
-      show_help if ARGV.length.zero?
+      runner @options
+      load_fasten @load_path
 
-      runner(@options)
-      load_fasten ARGV
+      show_help if runner.task_list.empty?
 
       runner.perform
     end

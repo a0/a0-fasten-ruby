@@ -10,5 +10,6 @@
 # rspec failure tracking
 .rspec_status
 /fasten/log
+/demo/fasten/log
 *.testfile
 .DS_Store
