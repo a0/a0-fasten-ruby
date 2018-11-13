@@ -47,6 +47,10 @@ module Fasten
       STDIN.tty? && STDOUT.tty?
     end
 
+    def default_use_threads
+      !OS.posix?
+    end
+
     def default_ui_mode
       return @default_ui_mode if defined? @default_ui_mode
 
@@ -107,10 +111,10 @@ module Fasten
         opts.on '--ui=UI', String, "Type of UI: curses, console. (default: #{default_ui_mode} on this machine)" do |ui_mode|
           @options[:ui_mode] = ui_mode
         end
-        opts.on '-t', '--threads', 'Use threads workers for parallel execution' do
+        opts.on '-t', '--threads', "Use threads workers for parallel execution#{default_use_threads && ' (default on this machine)' || nil}" do
           @options[:use_threads] = true
         end
-        opts.on '-p', '--processes', 'Use process workers for parallel execution' do
+        opts.on '-p', '--processes', "Use process workers for parallel execution#{!default_use_threads && ' (default on this machine)' || nil}" do
           @options[:use_threads] = false
         end
         opts.on '-v', '--version', 'Display version info' do
