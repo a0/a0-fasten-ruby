@@ -25,7 +25,7 @@ module Fasten
           stats_data << row.to_h
         end
 
-        @task_waiting_list = nil
+        @tasks.waiting = nil
       rescue StandardError
         nil
       end
@@ -127,10 +127,10 @@ module Fasten
       end
 
       def update_stats(history, entry)
-        entry['cnt'] = count = history.size
-        entry['avg'] = avg = history.sum.to_f / count
-        entry['std'] = std = Math.sqrt(history.inject(0.0) { |v, x| v + (x - avg)**2 })
-        entry['err'] = std / Math.sqrt(count) if count.positive?
+        entry['cnt'] = cnt = history.size
+        entry['avg'] = avg = history.sum.to_f / cnt
+        entry['std'] = std = Math.sqrt(history.map { |x| (x - avg)**2 }.sum / cnt)
+        entry['err'] = std / Math.sqrt(cnt) if cnt.positive?
       end
     end
   end

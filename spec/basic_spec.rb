@@ -8,21 +8,22 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
   end
 
   it "using #{process_model}, performs an empty runner" do |ex|
-    f = Fasten::Runner.new name: ex.description, use_threads: use_threads
-    f.perform
+    runner = Fasten::Runner.new name: ex.description, use_threads: use_threads
+    runner.perform
   end
 
   it "using #{process_model}, performs #{max} tasks with 100 workers, without dependencies" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
-    f = Fasten::Runner.new name: ex.description, workers: 100, use_threads: use_threads
+
+    runner = Fasten::Runner.new name: ex.description, workers: 100, use_threads: use_threads
     max.times do |index|
       shell = OS.windows? ? "ruby -e 'sleep 0.2; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep 0.2; touch #{index}.testfile"
-      f.add Fasten::Task.new(name: index.to_s, shell: shell)
+      runner.task index.to_s, shell: shell
     end
-    f.perform
+    runner.perform
 
     files = Dir['*.testfile']
-    items = f.task_list.map { |item| "#{item}.testfile" }
+    items = runner.tasks.map { |item| "#{item}.testfile" }
     FileUtils.rm_rf Dir.glob('*.testfile')
 
     expect(files.sort).to eq(items.sort)
@@ -49,14 +50,14 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
       end
     end
 
-    f = Fasten::Runner.new name: ex.description, workers: 50, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, workers: 50, use_threads: use_threads
     l.values.map(&:values).flatten.each do |item|
-      f.add Fasten::Task.new(name: item[:task], after: item[:after], shell: item[:shell])
+      runner.tasks << Fasten::Task.new(name: item[:task], after: item[:after], shell: item[:shell])
     end
-    f.perform
+    runner.perform
 
     files = Dir['*.testfile']
-    items = f.task_list.map { |item| "#{item}.testfile" }
+    items = runner.tasks.map { |item| "#{item}.testfile" }
     FileUtils.rm_rf Dir.glob('*.testfile')
 
     expect(files.sort).to eq(items.sort)

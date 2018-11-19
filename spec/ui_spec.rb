@@ -4,14 +4,14 @@ RSpec.shared_examples 'ui' do |use_threads|
   max = OS.windows? ? 100 : 500
 
   it "using #{process_model}, shows progressbar correctly for #{max} tasks" do |ex|
-    f = Fasten::Runner.new name: ex.description, workers: 1, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, workers: 1, use_threads: use_threads
 
     max.times do |index|
       shell = OS.windows? ? "ruby -e 'sleep 0.1'" : 'sleep 0.01'
-      f.add Fasten::Task.new name: "t-#{index}", shell: shell
+      runner.task "t-#{index}", shell: shell
     end
 
-    f.perform
+    runner.perform
   end
 end
 

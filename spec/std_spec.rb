@@ -4,12 +4,12 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
   it "using #{process_model}, shell writes stdout to file" do |ex|
     FileUtils.rm_rf 'fasten/log'
 
-    f = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}" }.each do |name|
-      f.add Fasten::Task.new name: name, shell: "echo SHELL STDOUT ES #{name}"
+      runner.task name, shell: "echo SHELL STDOUT ES #{name}"
     end
 
-    f.perform
+    runner.perform
 
     Array.new(25) { |index| "std-#{index}" }.each do |name|
       text = File.open("fasten/log/task/#{name}.log").grep(/SHELL STDOUT ES/).first.to_s.chomp
@@ -20,12 +20,12 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
   it "using #{process_model}, shell writes stdout to file" do |ex|
     FileUtils.rm_rf 'fasten/log'
 
-    f = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}" }.each do |name|
-      f.add Fasten::Task.new name: name, shell: "echo SHELL STDERR ES #{name}>&2"
+      runner.task name, shell: "echo SHELL STDERR ES #{name}>&2"
     end
 
-    f.perform
+    runner.perform
 
     Array.new(25) { |index| "std-#{index}" }.each do |name|
       text = File.open("fasten/log/task/#{name}.log").grep(/SHELL STDERR ES/).first.to_s.chomp
@@ -36,12 +36,12 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
   it "using #{process_model}, ruby writes stdout to file" do |ex|
     FileUtils.rm_rf 'fasten/log'
 
-    f = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}" }.each do |name|
-      f.add Fasten::Task.new name: name, ruby: "STDOUT.puts 'RUBY STDOUT ES #{name}.constant'; $stdout.puts 'RUBY stdout ES #{name}.object'"
+      runner.task name, ruby: "STDOUT.puts 'RUBY STDOUT ES #{name}.constant'; $stdout.puts 'RUBY stdout ES #{name}.object'"
     end
 
-    f.perform
+    runner.perform
 
     Array.new(25) { |index| "std-#{index}" }.each do |name|
       text = File.open("fasten/log/task/#{name}.log").grep(/RUBY STDOUT ES/).first.to_s.chomp
@@ -54,12 +54,12 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
   it "using #{process_model}, ruby writes stderr to file" do |ex|
     FileUtils.rm_rf 'fasten/log'
 
-    f = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}" }.each do |name|
-      f.add Fasten::Task.new name: name, ruby: "STDERR.puts 'RUBY STDERR ES #{name}.constant'; $stderr.puts 'RUBY stderr ES #{name}.object'"
+      runner.task name, ruby: "STDERR.puts 'RUBY STDERR ES #{name}.constant'; $stderr.puts 'RUBY stderr ES #{name}.object'"
     end
 
-    f.perform
+    runner.perform
 
     Array.new(25) { |index| "std-#{index}" }.each do |name|
       text = File.open("fasten/log/task/#{name}.log").grep(/RUBY STDERR ES/).first.to_s.chomp

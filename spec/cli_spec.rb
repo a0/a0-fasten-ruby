@@ -8,7 +8,7 @@ RSpec.shared_examples 'cli' do |use_threads|
 
     Fasten.cleanup
     load 'spec/sample_fasten.rb'
-    items = Fasten.runner.task_list.map { |item| "#{item}.testfile" }
+    items = Fasten.runner.tasks.map { |item| "#{item}.testfile" }
     FileUtils.rm_rf Dir.glob('*.testfile')
 
     expect(files.sort).to eq(items.sort)

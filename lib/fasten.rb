@@ -2,9 +2,12 @@
 
 require 'optparse'
 require 'fasten/task'
+require 'fasten/task_manager'
 require 'fasten/runner'
 require 'fasten/worker'
 require 'fasten/version'
+
+require 'fasten/defaults'
 
 module Fasten
   class << self
@@ -33,32 +36,6 @@ module Fasten
 
     def register(**options, &block)
       runner(**options).register(&block)
-    end
-
-    def default_name
-      File.basename(Dir.getwd)
-    end
-
-    def default_workers
-      Parallel.physical_processor_count
-    end
-
-    def default_developer
-      STDIN.tty? && STDOUT.tty?
-    end
-
-    def default_use_threads
-      !OS.posix?
-    end
-
-    def default_ui_mode
-      return @default_ui_mode if defined? @default_ui_mode
-
-      require 'fasten/ui/curses'
-
-      @default_ui_mode = :curses
-    rescue StandardError, LoadError
-      @default_ui_mode = :console
     end
 
     def load_fasten(args)
@@ -122,15 +99,14 @@ module Fasten
           exit 0
         end
         opts.on_tail '-h', '--help', 'Shows this help' do
-          puts opts
-          exit 0
+          show_help
         end
       end
     end
 
-    def show_help
+    def show_help(exit_code = 0)
       puts opt_parser
-      exit 1
+      exit exit_code
     end
 
     def invoke
@@ -139,7 +115,7 @@ module Fasten
       runner @options
       load_fasten @load_path
 
-      show_help if runner.task_list.empty?
+      show_help 1 if runner.tasks.empty?
 
       runner.perform
     end

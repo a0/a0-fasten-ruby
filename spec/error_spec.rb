@@ -1,17 +1,19 @@
 RSpec.shared_examples 'error handling' do |use_threads|
   process_model = use_threads ? 'threads' : 'processes'
+  wait = OS.windows? ? 0.5 : 0.2
 
   it "using #{process_model}, early stop in case of failure" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
 
-    f = Fasten::Runner.new name: ex.description, workers: 1, worker_class: ErrorWorker, developer: false, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, workers: 1, worker_class: ErrorWorker, developer: false, use_threads: use_threads
 
     100.times do |index|
-      shell = OS.windows? ? "ruby -e 'sleep 0.05; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep 0.05; touch #{index}.testfile"
-      f.add Fasten::Task.new name: index.to_s, shell: shell
+      shell = OS.windows? ? "ruby -e 'sleep #{wait}; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep #{wait}; touch #{index}.testfile"
+      runner.task index.to_s, shell: shell
     end
-    expect { f.perform }.to raise_error(StandardError)
+    expect { runner.perform }.to raise_error(StandardError)
 
+    sleep 2 * wait
     files = Dir['*.testfile']
     FileUtils.rm_rf Dir.glob('*.testfile')
 
@@ -21,14 +23,15 @@ RSpec.shared_examples 'error handling' do |use_threads|
   it "using #{process_model}, it should wait other tasks end in case of failure" do |ex|
     FileUtils.rm_rf Dir.glob('*.testfile')
 
-    f = Fasten::Runner.new name: ex.description, workers: 10, worker_class: ErrorWorker, developer: false, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, workers: 10, worker_class: ErrorWorker, developer: false, use_threads: use_threads
 
     100.times do |index|
-      shell = OS.windows? ? "ruby -e 'sleep 0.3; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep 0.3; touch #{index}.testfile"
-      f.add Fasten::Task.new name: index.to_s, shell: shell
+      shell = OS.windows? ? "ruby -e 'sleep #{wait}; require \"fileutils\"; FileUtils.touch \"#{index}.testfile\"'" : "sleep #{wait}; touch #{index}.testfile"
+      runner.task index.to_s, shell: shell
     end
-    expect { f.perform }.to raise_error(StandardError)
+    expect { runner.perform }.to raise_error(StandardError)
 
+    sleep 2 * wait
     files = Dir['*.testfile']
     FileUtils.rm_rf Dir.glob('*.testfile')
 

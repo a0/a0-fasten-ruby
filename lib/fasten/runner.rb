@@ -3,7 +3,6 @@ require 'parallel'
 require 'pry'
 require 'os'
 
-require 'fasten/support/dag'
 require 'fasten/support/logger'
 require 'fasten/support/state'
 require 'fasten/support/stats'
@@ -13,34 +12,29 @@ require 'fasten/timeout_queue'
 
 module Fasten
   class Runner
-    include Fasten::Support::DAG
     include Fasten::Support::Logger
     include Fasten::Support::State
     include Fasten::Support::Stats
     include Fasten::Support::UI
     include Fasten::Support::Yaml
 
-    attr_accessor :name, :workers, :worker_class, :fasten_dir, :developer, :stats, :summary, :ui_mode, :worker_list, :use_threads, :queue
+    attr_accessor :name, :stats, :summary, :workers, :worker_class, :fasten_dir, :use_threads, :ui_mode, :developer, :worker_list, :queue, :tasks
 
-    def initialize(name: Fasten.default_name,
-                   developer: Fasten.default_developer, summary: nil, ui_mode: Fasten.default_ui_mode, workers: Fasten.default_workers,
-                   worker_class: Worker, fasten_dir: 'fasten', use_threads: Fasten.default_use_threads)
-      reconfigure(name: name, developer: developer, summary: summary, ui_mode: ui_mode, workers: workers,
-                  worker_class: worker_class, fasten_dir: fasten_dir, use_threads: use_threads)
+    def initialize(**options)
+      %i[name stats summary workers worker_class fasten_dir use_threads ui_mode developer].each do |key|
+        options[key] = Fasten.send "default_#{key}" unless options.key? key
+      end
+
+      @tasks = TaskManager.new
+
+      reconfigure(options)
     end
 
     def reconfigure(**options)
-      self.stats        = options[:name] && true if options[:name] || options.key?(:stats)
-      self.name         = options[:name] || "#{self.class.to_s.gsub('::', '-')}-#{$PID}" if options.key?(:name)
-      self.workers      = options[:workers]       if options.key?(:workers)
-      self.worker_class = options[:worker_class]  if options.key?(:worker_class)
-      self.fasten_dir   = options[:fasten_dir]    if options.key?(:fasten_dir)
-      self.developer    = options[:developer]     if options.key?(:developer)
-      self.use_threads  = options[:use_threads]   if options.key?(:use_threads)
-      self.summary      = options[:summary]       if options.key?(:summary)
-      self.ui_mode      = options[:ui_mode]       if options.key?(:ui_mode)
+      %i[name stats summary workers worker_class fasten_dir use_threads ui_mode developer].each do |key|
+        send "#{key}=", options[key] if options.key? key
+      end
 
-      initialize_dag
       initialize_stats
       initialize_logger
 
@@ -48,7 +42,9 @@ module Fasten
     end
 
     def task(name, **opts, &block)
-      add Task.new(name: name, **opts, block: block)
+      tasks << task = Task.new(name: name, **opts, block: block)
+
+      task
     end
 
     def register(&block)
@@ -64,7 +60,7 @@ module Fasten
         perform_loop
       end
 
-      self.state = task_list.map(&:state).all?(:DONE) ? :DONE : :FAIL
+      self.state = tasks.map(&:state).all?(:DONE) ? :DONE : :FAIL
       log_fin self, running_counters
 
       stats_add_entry(state, self)
@@ -76,20 +72,20 @@ module Fasten
 
     def map(list, &block)
       list.each do |item|
-        add Fasten::Task.new name: item.to_s, request: item, block: block
+        task item.to_s, request: item, &block
       end
 
       perform
 
-      task_list.map(&:response)
+      tasks.map(&:response)
     end
 
     def done_counters
-      "#{task_done_list.count}/#{task_list.count}"
+      "#{tasks.done.count}/#{tasks.count}"
     end
 
     def running_counters
-      "#{task_done_list.count + task_running_list.count}/#{task_list.count}"
+      "#{tasks.done.count + tasks.running.count}/#{tasks.count}"
     end
 
     def perform_loop
@@ -103,25 +99,25 @@ module Fasten
           dispatch_pending_tasks
         end
 
-        break if no_running_tasks? && no_waiting_tasks? || state == :QUIT
+        break if tasks.no_running? && tasks.no_waiting? || state == :QUIT
       end
 
       remove_all_workers
     end
 
     def check_state
-      if state == :PAUSING && no_running_tasks?
+      if state == :PAUSING && tasks.no_running?
         self.state = :PAUSED
         ui.message = nil
         ui.force_clear
-      elsif state == :QUITTING && no_running_tasks?
+      elsif state == :QUITTING && tasks.no_running?
         self.state = :QUIT
         ui.force_clear
       end
     end
 
     def should_wait_for_running_tasks?
-      tasks_running? && (no_waiting_tasks? || tasks_failed? || %i[PAUSING QUITTING].include?(state)) || task_running_list.count >= workers
+      tasks.running? && (tasks.no_waiting? || tasks.failed? || %i[PAUSING QUITTING].include?(state)) || tasks.running.count >= workers
     end
 
     def wait_for_running_tasks
@@ -134,21 +130,20 @@ module Fasten
       while should_wait_for_running_tasks?
         ui.update
 
-        tasks = queue.receive_with_timeout(0.5)
-
-        receive_workers_tasks_thread(tasks)
+        receive_workers_tasks_thread queue.receive_with_timeout(0.5)
       end
 
       ui.update
     end
 
-    def receive_workers_tasks_thread(tasks)
-      tasks&.each do |task|
-        task_running_list.delete task
+    def receive_workers_tasks_thread(items)
+      items&.each do |task|
+        tasks.running.delete task
 
         task.worker.running_task = task.worker.state = nil
 
-        update_task task
+        tasks.update task
+        stats_add_entry(task.state, task)
 
         log_fin task, done_counters
         ui.force_clear
@@ -173,9 +168,10 @@ module Fasten
 
         task = worker.receive_response_from_child
 
-        task_running_list.delete task
+        tasks.running.delete task
 
-        update_task task
+        tasks.update task
+        stats_add_entry(task.state, task)
 
         log_fin task, done_counters
         ui.force_clear
@@ -189,7 +185,7 @@ module Fasten
     end
 
     def raise_error_in_failure
-      return unless tasks_failed?
+      return unless tasks.failed?
 
       show_error_tasks
 
@@ -238,13 +234,13 @@ module Fasten
     end
 
     def dispatch_pending_tasks
-      while tasks_waiting? && task_running_list.count < workers
+      while tasks.waiting? && tasks.running.count < workers
         worker = find_or_create_worker
 
-        task = next_task
+        task = tasks.next
         log_ini task, "on worker #{worker}"
         worker.send_request_to_child(task)
-        task_running_list << task
+        tasks.running << task
 
         ui.force_clear
       end

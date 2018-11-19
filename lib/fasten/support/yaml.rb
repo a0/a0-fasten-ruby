@@ -13,7 +13,7 @@ module Fasten
             params = {}
           end
 
-          add Fasten::Task.new({ name: name }.merge(params))
+          task name, params
         end
 
         log_info "Loaded #{items.count} tasks from #{path}"
@@ -22,7 +22,7 @@ module Fasten
       def save_yaml(path)
         keys = %i[after shell]
 
-        items = task_list.map do |task|
+        items = tasks.map do |task|
           data = task.to_h.select do |key, _val|
             keys.include? key
           end

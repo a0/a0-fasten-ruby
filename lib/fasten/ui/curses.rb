@@ -9,7 +9,7 @@ module Fasten
       include ::Curses
       extend Forwardable
 
-      def_delegators :runner, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
+      def_delegators :runner, :worker_list, :tasks, :worker_list
       def_delegators :runner, :name, :workers, :workers=, :state, :state=
 
       attr_accessor :n_rows, :n_cols, :selected, :sel_index, :clear_needed, :message, :runner
@@ -106,11 +106,11 @@ module Fasten
           self.workers += 1
           self.message = "Increasing workers to #{workers}"
         elsif key == Curses::Key::DOWN
-          self.sel_index = sel_index ? [sel_index + 1, task_list.count - 1].min : 0
-          self.selected = task_list[sel_index]
+          self.sel_index = sel_index ? [sel_index + 1, tasks.count - 1].min : 0
+          self.selected = tasks[sel_index]
         elsif key == Curses::Key::UP
-          self.sel_index = sel_index ? [sel_index - 1, 0].max : task_list.count - 1
-          self.selected = task_list[sel_index]
+          self.sel_index = sel_index ? [sel_index - 1, 0].max : tasks.count - 1
+          self.selected = tasks[sel_index]
         elsif key == 'q'
           self.message = 'Will quit when running tasks end'
           self.state = :QUITTING
@@ -125,8 +125,8 @@ module Fasten
       end
 
       def ui_workers_summary
-        running_count = task_running_list.count
-        waiting_count = task_waiting_list.count
+        running_count = tasks.running.count
+        waiting_count = tasks.waiting.count
         workers_count = worker_list.count
 
         "Procs running: #{running_count} idle: #{workers_count - running_count} waiting: #{waiting_count} #{runner.use_threads ? 'threads' : 'processes'}: #{workers}"
@@ -196,15 +196,18 @@ module Fasten
 
       def ui_task_color(task)
         rev = task == selected ? A_REVERSE : 0
+
         case task.state
         when :RUNNING
           color_pair(1) | A_TOP | rev
-        when :FAIL
-          color_pair(3) | A_TOP | rev
         when :DONE
           color_pair(2) | A_TOP | rev
+        when :FAIL
+          color_pair(3) | A_TOP | rev
+        when :WAIT
+          A_TOP | rev
         else
-          task_waiting_list.include?(task) ? A_TOP | rev : color_pair(4) | A_DIM | rev
+          color_pair(4) | A_DIM | rev
         end
       end
 
@@ -228,8 +231,8 @@ module Fasten
           worker.spinner = (worker.spinner + 1) % SPINNER_LEN if worker.running?
         end
 
-        count_done = task_done_list.count
-        count_total = task_list.count
+        count_done = tasks.done.count
+        count_total = tasks.count
         tl = count_total.to_s.length
         col_ini = ui_text_aligned(2, :left, format("Tasks %#{tl}d/%d", count_done, count_total)) + 1
         col_fin = n_cols - 5
@@ -238,7 +241,7 @@ module Fasten
         ui_progressbar(2, col_ini, col_fin, count_done, count_total)
 
         max = 2
-        list = task_list.sort_by.with_index { |x, index| [x.run_score, index] }
+        list = tasks.sort_by.with_index { |x, index| [x.run_score, index] }
         list.each_with_index do |task, index|
           next if 3 + index >= n_rows
 

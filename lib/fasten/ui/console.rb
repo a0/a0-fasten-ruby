@@ -5,17 +5,15 @@ module Fasten
     class Console
       extend Forwardable
 
-      def_delegators :runner, :worker_list, :task_list, :task_done_list, :task_error_list, :task_running_list, :task_waiting_list, :worker_list
+      def_delegators :runner, :worker_list, :tasks, :worker_list
       def_delegators :runner, :name, :workers, :workers=, :state, :state=, :hformat
 
       attr_accessor :runner
 
       def initialize(runner:)
         @runner = runner
-        @old = {
-          task_done_list: [],
-          task_error_list: []
-        }
+        @old_done = []
+        @old_failed = []
       end
 
       def setup
@@ -33,8 +31,9 @@ module Fasten
 
       def update
         setup unless @setup_done
-        display_task_message(task_done_list, @old[:task_done_list], 'Done in')
-        display_task_message(task_error_list, @old[:task_error_list], 'Fail in')
+
+        display_task_message(tasks.done, @old_done, 'Done in')
+        display_task_message(tasks.failed, @old_failed, 'Fail in')
       end
 
       def cleanup
