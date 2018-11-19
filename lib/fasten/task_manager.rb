@@ -44,7 +44,7 @@ module Fasten
 
         move_pending_to_waiting
       else
-        error << task
+        failed << task
       end
     end
 
