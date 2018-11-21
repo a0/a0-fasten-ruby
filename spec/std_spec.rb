@@ -4,7 +4,7 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
   it "using #{process_model}, shell writes stdout to file" do |ex|
     FileUtils.rm_rf 'fasten/log'
 
-    runner = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, jobs: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}" }.each do |name|
       runner.task name, shell: "echo SHELL STDOUT ES #{name}"
     end
@@ -20,7 +20,7 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
   it "using #{process_model}, shell writes stdout to file" do |ex|
     FileUtils.rm_rf 'fasten/log'
 
-    runner = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, jobs: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}" }.each do |name|
       runner.task name, shell: "echo SHELL STDERR ES #{name}>&2"
     end
@@ -36,7 +36,7 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
   it "using #{process_model}, ruby writes stdout to file" do |ex|
     FileUtils.rm_rf 'fasten/log'
 
-    runner = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, jobs: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}" }.each do |name|
       runner.task name, ruby: "STDOUT.puts 'RUBY STDOUT ES #{name}.constant'; $stdout.puts 'RUBY stdout ES #{name}.object'"
     end
@@ -54,7 +54,7 @@ RSpec.shared_examples 'stdout, stderr' do |use_threads|
   it "using #{process_model}, ruby writes stderr to file" do |ex|
     FileUtils.rm_rf 'fasten/log'
 
-    runner = Fasten::Runner.new name: ex.description, workers: 5, use_threads: use_threads
+    runner = Fasten::Runner.new name: ex.description, jobs: 5, use_threads: use_threads
     Array.new(25) { |index| "std-#{index}" }.each do |name|
       runner.task name, ruby: "STDERR.puts 'RUBY STDERR ES #{name}.constant'; $stderr.puts 'RUBY stderr ES #{name}.object'"
     end

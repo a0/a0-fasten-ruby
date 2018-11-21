@@ -6,7 +6,7 @@ module Fasten
       extend Forwardable
 
       def_delegators :runner, :worker_list, :tasks, :worker_list
-      def_delegators :runner, :name, :workers, :workers=, :state, :state=, :hformat
+      def_delegators :runner, :name, :jobs, :jobs=, :state, :state=, :hformat
 
       attr_accessor :runner
 
@@ -20,7 +20,7 @@ module Fasten
         puts <<~FIN
 
           = == === ==== ===== ====== ======= ======== ========= ==========
-          Fasten your seatbelts! #{'💺' * workers} #{runner.use_threads ? 'threads' : 'processes'}
+          Fasten your seatbelts! #{'💺' * jobs} #{runner.use_threads ? 'threads' : 'processes'}
 
           #{name}
         FIN

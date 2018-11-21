@@ -14,7 +14,7 @@ module Fasten
       false
     end
 
-    def default_workers
+    def default_jobs
       Parallel.physical_processor_count
     end
 

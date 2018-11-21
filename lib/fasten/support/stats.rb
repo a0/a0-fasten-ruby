@@ -112,8 +112,8 @@ module Fasten
                                     filters: { 'run' => FLOAT_FORMATTER, 'avg' => FLOAT_FORMATTER, 'std' => FLOAT_FORMATTER, 'err' => FLOAT_FORMATTER },
                                     description: false)
 
-        puts format('∑tasks: %<task>s runner: %<runner>s saved: %<saved>s workers: %<workers>s',
-                    task: hformat(sub), runner: hformat(tot, sub), saved: hformat(sub - tot, sub), workers: workers.to_s)
+        puts format('∑tasks: %<task>s runner: %<runner>s saved: %<saved>s jobs: %<jobs>s',
+                    task: hformat(sub), runner: hformat(tot, sub), saved: hformat(sub - tot, sub), jobs: jobs.to_s)
       end
 
       def stats_history(entry)

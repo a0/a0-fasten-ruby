@@ -21,7 +21,7 @@ It has been released so people can try it and make feature requests, comments an
 ### Execution:
 - [x] tasks are executed in parallel, using worker processes/threads
 - [x] process are preferred on POSIX systems, otherwise threads are used
-- [x] default number of workers is the # of real cpu cores on the system
+- [x] default number of jobs is the # of real cpu cores on the system
 - [x] in case of task Error or Exception, the whole run will be stopped
 - [x] runner saves a log file in `$(pwd)/fasten/log/runner/*name_of_runner*.log`
 - [x] each task saves its STDERR/STDOUT to a log file in `$(pwd)/fasten/log/task/*name_of_task*.log`
@@ -30,14 +30,14 @@ It has been released so people can try it and make feature requests, comments an
 
 ### UI/Curses
 - [x] only available if the 'curses' gem is installed
-- [x] Display number of workers running, idle, waiting, and number of workers (max)
+- [x] Display number of jobs running, idle, waiting, and number of jobs (max)
 - [x] Display current running tasks, pending tasks, waiting tasks, etc; showing which task is pending because other tasks need to be run first
 - [x] Display the number of tasks done/pending
 - [x] Display a progressbar
 - [x] Display current local time
 - [x] Pause whole runner with `P` key (waits current running tasks end)
 - [x] Resume paused runner with `R` key
-- [x] Press ⬅️ or ➡️ keys to dynamically increase/decrease number of workers
+- [x] Press ⬅️ or ➡️ keys to dynamically increase/decrease number of jobs
 - [ ] Use ⬆️ and ⬇️ to select tasks
 - [ ] Calculate ETA, assuming all tasks take same time
 - [ ] Calculate ETA, based on saved tasks statistics

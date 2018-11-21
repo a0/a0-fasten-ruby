@@ -18,10 +18,10 @@ module Fasten
     include Fasten::Support::UI
     include Fasten::Support::Yaml
 
-    attr_accessor :name, :stats, :summary, :workers, :worker_class, :fasten_dir, :use_threads, :ui_mode, :developer, :worker_list, :queue, :tasks
+    attr_accessor :name, :stats, :summary, :jobs, :worker_class, :fasten_dir, :use_threads, :ui_mode, :developer, :worker_list, :queue, :tasks
 
     def initialize(**options)
-      %i[name stats summary workers worker_class fasten_dir use_threads ui_mode developer].each do |key|
+      %i[name stats summary jobs worker_class fasten_dir use_threads ui_mode developer].each do |key|
         options[key] = Fasten.send "default_#{key}" unless options.key? key
       end
 
@@ -31,7 +31,7 @@ module Fasten
     end
 
     def reconfigure(**options)
-      %i[name stats summary workers worker_class fasten_dir use_threads ui_mode developer].each do |key|
+      %i[name stats summary jobs worker_class fasten_dir use_threads ui_mode developer].each do |key|
         send "#{key}=", options[key] if options.key? key
       end
 
@@ -92,7 +92,7 @@ module Fasten
       loop do
         wait_for_running_tasks
         raise_error_in_failure
-        remove_workers_as_needed
+        remove_jobs_as_needed
         if %i[PAUSING PAUSED QUITTING].include?(state)
           check_state
         else
@@ -102,7 +102,7 @@ module Fasten
         break if tasks.no_running? && tasks.no_waiting? || state == :QUIT
       end
 
-      remove_all_workers
+      remove_all_jobs
     end
 
     def check_state
@@ -117,7 +117,7 @@ module Fasten
     end
 
     def should_wait_for_running_tasks?
-      tasks.running? && (tasks.no_waiting? || tasks.failed? || %i[PAUSING QUITTING].include?(state)) || tasks.running.count >= workers
+      tasks.running? && (tasks.no_waiting? || tasks.failed? || %i[PAUSING QUITTING].include?(state)) || tasks.running.count >= jobs
     end
 
     def wait_for_running_tasks
@@ -130,13 +130,13 @@ module Fasten
       while should_wait_for_running_tasks?
         ui.update
 
-        receive_workers_tasks_thread queue.receive_with_timeout(0.5)
+        receive_jobs_tasks_thread queue.receive_with_timeout(0.5)
       end
 
       ui.update
     end
 
-    def receive_workers_tasks_thread(items)
+    def receive_jobs_tasks_thread(items)
       items&.each do |task|
         tasks.running.delete task
 
@@ -156,13 +156,13 @@ module Fasten
         reads = worker_list.map(&:parent_read)
         reads, _writes, _errors = IO.select(reads, [], [], 0.5)
 
-        receive_workers_tasks_fork(reads)
+        receive_jobs_tasks_fork(reads)
       end
 
       ui.update
     end
 
-    def receive_workers_tasks_fork(reads)
+    def receive_jobs_tasks_fork(reads)
       reads&.each do |read|
         next unless (worker = worker_list.find { |item| item.parent_read == read })
 
@@ -199,14 +199,14 @@ module Fasten
 
         Kernel.binding.pry # rubocop:disable Lint/Debugger
       else
-        remove_all_workers
+        remove_all_jobs
 
         raise message
       end
     end
 
-    def remove_workers_as_needed
-      while worker_list.count > workers
+    def remove_jobs_as_needed
+      while worker_list.count > jobs
         return unless (worker = worker_list.find { |item| item.running_task.nil? })
 
         worker.kill
@@ -234,7 +234,7 @@ module Fasten
     end
 
     def dispatch_pending_tasks
-      while tasks.waiting? && tasks.running.count < workers
+      while tasks.waiting? && tasks.running.count < jobs
         worker = find_or_create_worker
 
         task = tasks.next
@@ -246,7 +246,7 @@ module Fasten
       end
     end
 
-    def remove_all_workers
+    def remove_all_jobs
       worker_list.each(&:kill)
       worker_list.clear
 

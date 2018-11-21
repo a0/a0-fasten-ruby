@@ -10,7 +10,7 @@ module Fasten
       extend Forwardable
 
       def_delegators :runner, :worker_list, :tasks, :worker_list
-      def_delegators :runner, :name, :workers, :workers=, :state, :state=
+      def_delegators :runner, :name, :jobs, :jobs=, :state, :state=
 
       attr_accessor :n_rows, :n_cols, :selected, :sel_index, :clear_needed, :message, :runner
 
@@ -28,7 +28,7 @@ module Fasten
         ui_keyboard
         clear if clear_needed
         draw_title
-        ui_workers
+        ui_jobs
         ui_tasks
 
         refresh
@@ -96,15 +96,15 @@ module Fasten
         self.message = nil
 
         if key == Curses::Key::LEFT
-          if workers <= 1
+          if jobs <= 1
             self.message = "Can't remove 1 worker left, press [P] to pause"
           else
-            self.workers -= 1
-            self.message = "Decreasing workers to #{workers}"
+            self.jobs -= 1
+            self.message = "Decreasing jobs to #{jobs}"
           end
         elsif key == Curses::Key::RIGHT
-          self.workers += 1
-          self.message = "Increasing workers to #{workers}"
+          self.jobs += 1
+          self.message = "Increasing jobs to #{jobs}"
         elsif key == Curses::Key::DOWN
           self.sel_index = sel_index ? [sel_index + 1, tasks.count - 1].min : 0
           self.selected = tasks[sel_index]
@@ -124,16 +124,16 @@ module Fasten
         force_clear
       end
 
-      def ui_workers_summary
+      def ui_jobs_summary
         running_count = tasks.running.count
         waiting_count = tasks.waiting.count
-        workers_count = worker_list.count
+        jobs_count = worker_list.count
 
-        "Procs running: #{running_count} idle: #{workers_count - running_count} waiting: #{waiting_count} #{runner.use_threads ? 'threads' : 'processes'}: #{workers}"
+        "Procs running: #{running_count} idle: #{jobs_count - running_count} waiting: #{waiting_count} #{runner.use_threads ? 'threads' : 'processes'}: #{jobs}"
       end
 
-      def ui_workers
-        l = ui_text_aligned(1, :left, ui_workers_summary) + 1
+      def ui_jobs
+        l = ui_text_aligned(1, :left, ui_jobs_summary) + 1
 
         worker_list.each_with_index do |worker, index|
           setpos 1, l + index
