@@ -9,7 +9,7 @@ module Fasten
       include ::Curses
       extend Forwardable
 
-      def_delegators :runner, :worker_list, :tasks, :worker_list
+      def_delegators :runner, :workers, :tasks
       def_delegators :runner, :name, :jobs, :jobs=, :state, :state=
 
       attr_accessor :n_rows, :n_cols, :selected, :sel_index, :clear_needed, :message, :runner
@@ -127,15 +127,15 @@ module Fasten
       def ui_jobs_summary
         running_count = tasks.running.count
         waiting_count = tasks.waiting.count
-        jobs_count = worker_list.count
+        workers_count = workers.count
 
-        "Procs running: #{running_count} idle: #{jobs_count - running_count} waiting: #{waiting_count} #{runner.use_threads ? 'threads' : 'processes'}: #{jobs}"
+        "Procs running: #{running_count} idle: #{workers_count - running_count} waiting: #{waiting_count} #{runner.use_threads ? 'threads' : 'processes'}: #{jobs}"
       end
 
       def ui_jobs
         l = ui_text_aligned(1, :left, ui_jobs_summary) + 1
 
-        worker_list.each_with_index do |worker, index|
+        workers.each_with_index do |worker, index|
           setpos 1, l + index
           attrs = worker.running? ? A_STANDOUT : color_pair(4) | A_DIM
           attrset attrs
@@ -227,7 +227,7 @@ module Fasten
       end
 
       def ui_tasks
-        worker_list.each do |worker|
+        workers.each do |worker|
           worker.spinner = (worker.spinner + 1) % SPINNER_LEN if worker.running?
         end
 

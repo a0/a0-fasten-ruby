@@ -18,7 +18,7 @@ module Fasten
     include Fasten::Support::UI
     include Fasten::Support::Yaml
 
-    attr_accessor :name, :stats, :summary, :jobs, :worker_class, :fasten_dir, :use_threads, :ui_mode, :developer, :worker_list, :queue, :tasks
+    attr_accessor :name, :stats, :summary, :jobs, :worker_class, :fasten_dir, :use_threads, :ui_mode, :developer, :workers, :queue, :tasks
 
     def initialize(**options)
       %i[name stats summary jobs worker_class fasten_dir use_threads ui_mode developer].each do |key|
@@ -26,6 +26,7 @@ module Fasten
       end
 
       @tasks = TaskManager.new
+      @workers = []
 
       reconfigure(options)
     end
@@ -37,8 +38,6 @@ module Fasten
 
       initialize_stats
       initialize_logger
-
-      self.worker_list ||= []
     end
 
     def task(name, **opts, &block)
@@ -92,7 +91,7 @@ module Fasten
       loop do
         wait_for_running_tasks
         raise_error_in_failure
-        remove_jobs_as_needed
+        remove_workers_as_needed
         if %i[PAUSING PAUSED QUITTING].include?(state)
           check_state
         else
@@ -102,7 +101,7 @@ module Fasten
         break if tasks.no_running? && tasks.no_waiting? || state == :QUIT
       end
 
-      remove_all_jobs
+      remove_all_workers
     end
 
     def check_state
@@ -153,7 +152,7 @@ module Fasten
     def wait_for_running_tasks_fork
       while should_wait_for_running_tasks?
         ui.update
-        reads = worker_list.map(&:parent_read)
+        reads = workers.map(&:parent_read)
         reads, _writes, _errors = IO.select(reads, [], [], 0.5)
 
         receive_jobs_tasks_fork(reads)
@@ -164,7 +163,7 @@ module Fasten
 
     def receive_jobs_tasks_fork(reads)
       reads&.each do |read|
-        next unless (worker = worker_list.find { |item| item.parent_read == read })
+        next unless (worker = workers.find { |item| item.parent_read == read })
 
         task = worker.receive_response_from_child
 
@@ -199,31 +198,31 @@ module Fasten
 
         Kernel.binding.pry # rubocop:disable Lint/Debugger
       else
-        remove_all_jobs
+        remove_all_workers
 
         raise message
       end
     end
 
-    def remove_jobs_as_needed
-      while worker_list.count > jobs
-        return unless (worker = worker_list.find { |item| item.running_task.nil? })
+    def remove_workers_as_needed
+      while workers.count > jobs
+        return unless (worker = workers.find { |item| item.running_task.nil? })
 
         worker.kill
-        worker_list.delete worker
+        workers.delete worker
 
         ui.force_clear
       end
     end
 
     def find_or_create_worker
-      worker = worker_list.find { |item| item.running_task.nil? }
+      worker = workers.find { |item| item.running_task.nil? }
 
       unless worker
         @worker_id = (@worker_id || 0) + 1
         worker = worker_class.new runner: self, name: "#{worker_class.to_s.gsub('::', '-')}-#{format '%02X', @worker_id}", use_threads: use_threads
         worker.start
-        worker_list << worker
+        workers << worker
 
         log_info "Worker created: #{worker}"
 
@@ -246,9 +245,9 @@ module Fasten
       end
     end
 
-    def remove_all_jobs
-      worker_list.each(&:kill)
-      worker_list.clear
+    def remove_all_workers
+      workers.each(&:kill)
+      workers.clear
 
       ui.force_clear
     end

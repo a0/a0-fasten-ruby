@@ -5,7 +5,7 @@ module Fasten
     class Console
       extend Forwardable
 
-      def_delegators :runner, :worker_list, :tasks, :worker_list
+      def_delegators :runner, :workers, :tasks
       def_delegators :runner, :name, :jobs, :jobs=, :state, :state=, :hformat
 
       attr_accessor :runner
