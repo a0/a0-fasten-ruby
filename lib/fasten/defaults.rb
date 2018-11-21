@@ -35,7 +35,7 @@ module Fasten
 
       require 'fasten/ui/curses'
 
-      @default_ui_mode = :curses
+      @default_ui_mode = STDIN.tty? && STDOUT.tty? ? :curses : :console
     rescue StandardError, LoadError
       @default_ui_mode = :console
     end
