@@ -72,13 +72,13 @@ module Fasten
         opts.separator ''
         opts.separator 'Options:'
 
-        opts.on '-n NAME', '--name=NAME', String, "Change name of this runner (default: #{default_name} from current directory)" do |name|
+        opts.on '-n NAME', '--name NAME', String, "Change name of this runner (default: #{default_name} from current directory)" do |name|
           @options[:name] = name
         end
-        opts.on '-f PATH', '--file=PATH', String, 'File or folder with ruby code' do |path|
+        opts.on '-f PATH', '--file PATH', String, 'File or folder with ruby code' do |path|
           @load_path << path
         end
-        opts.on '-w WORKERS', '--workers=WORKERS', Numeric, "Number of processes/threads to use (default: #{default_workers} on this machine)" do |workers|
+        opts.on '-w WORKERS', '--workers WORKERS', Numeric, "Number of processes/threads to use (default: #{default_workers} on this machine)" do |workers|
           @options[:workers] = workers
         end
         opts.on '-s', '--[no-]summary', TrueClass, 'Display summary at the end of execution' do |boolean|
@@ -88,10 +88,10 @@ module Fasten
         opts.on '--ui=UI', String, "Type of UI: curses, console. (default: #{default_ui_mode} on this machine)" do |ui_mode|
           @options[:ui_mode] = ui_mode
         end
-        opts.on '-t', '--threads', "Use threads workers for parallel execution#{default_use_threads && ' (default on this machine)' || nil}" do
+        opts.on '-t', '--threads', "Use threads based workers for parallel execution#{default_use_threads && ' (default on this machine)' || nil}" do
           @options[:use_threads] = true
         end
-        opts.on '-p', '--processes', "Use process workers for parallel execution#{!default_use_threads && ' (default on this machine)' || nil}" do
+        opts.on '-p', '--processes', "Use process based workers for parallel execution#{!default_use_threads && ' (default on this machine)' || nil}" do
           @options[:use_threads] = false
         end
         opts.on '-v', '--version', 'Display version info' do
