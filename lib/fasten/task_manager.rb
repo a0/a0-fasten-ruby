@@ -2,7 +2,7 @@ module Fasten
   class TaskManager < Array
     attr_reader :done, :failed, :pending, :running, :targets
 
-    def initialize(targets: nil)
+    def initialize(targets: [])
       super()
 
       @map = {}
@@ -53,6 +53,7 @@ module Fasten
 
       reset
       setup_dependencies
+      setup_targets
       setup_scores
       move_pending_to_waiting
     end
@@ -87,8 +88,6 @@ module Fasten
       @running = by_state.delete(:RUNNING) || []
       @waiting = []
 
-      return unless @targets.nil? || @targets.empty?
-
       @pending = by_state.values.flatten.each do |task|
         task.depends = []
         task.dependants = []
@@ -110,8 +109,37 @@ module Fasten
       end
     end
 
-    def setup_scores
+    def setup_targets
+      return if @targets.empty?
+
+      @targets.each do |target|
+        task = target.is_a?(Task) ? target : @map[target]
+        raise "Target task #{target} not found" unless task
+
+        mark_needed(task)
+      end
+
+      @pending.reject { |task| task.state == :NEED }.each do |task|
+        @pending.delete task
+        delete task
+      end
+
       @pending.each do |task|
+        task.state = nil
+      end
+    end
+
+    def mark_needed(task)
+      return unless task.state == :IDLE
+
+      task.state = :NEED
+      task.depends.each do |depend_task|
+        mark_needed(depend_task)
+      end
+    end
+
+    def setup_scores
+      each do |task|
         task.run_score = task.dependants.count
       end
     end

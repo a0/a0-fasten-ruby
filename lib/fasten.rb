@@ -63,7 +63,7 @@ module Fasten
       @load_path = []
 
       @opt_parser = OptionParser.new do |opts|
-        opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
+        opts.banner = "Usage: #{$PROGRAM_NAME} [options] [targets]"
         opts.separator ''
         opts.separator 'Examples:'
         opts.separator '    fasten              # load and run all task from fasten/*_fasten.rb'
@@ -82,7 +82,6 @@ module Fasten
           @options[:jobs] = jobs
         end
         opts.on '-s', '--[no-]summary', TrueClass, 'Display summary at the end of execution' do |boolean|
-          puts "SUMMAMRY: #{boolean}"
           @options[:summary] = boolean
         end
         opts.on '--ui=UI', String, "Type of UI: curses, console. (default: #{default_ui_mode} on this machine)" do |ui_mode|
@@ -112,7 +111,10 @@ module Fasten
     def invoke
       opt_parser.parse!
 
+      @options[:targets] = ARGV.to_a
+
       runner @options
+      @load_path = Dir['fasten/*_fasten.rb'] if @load_path.empty?
       load_fasten @load_path
 
       show_help 1 if runner.tasks.empty?

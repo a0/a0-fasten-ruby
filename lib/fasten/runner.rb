@@ -25,7 +25,7 @@ module Fasten
         options[key] = Fasten.send "default_#{key}" unless options.key? key
       end
 
-      @tasks = TaskManager.new
+      @tasks = TaskManager.new(targets: options[:targets] || [])
       @workers = []
 
       reconfigure(options)
