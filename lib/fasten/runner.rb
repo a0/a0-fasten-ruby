@@ -205,18 +205,20 @@ module Fasten
     end
 
     def remove_workers_as_needed
-      while workers.count > jobs
-        return unless (worker = workers.find { |item| item.running_task.nil? })
+      workers.group_by(&:class).each do |_clazz, worker_list|
+        while worker_list.count > jobs
+          break unless (worker = workers.find { |item| item.running_task.nil? })
 
-        worker.kill
-        workers.delete worker
+          worker.kill
+          workers.delete worker
 
-        ui.force_clear
+          ui.force_clear
+        end
       end
     end
 
-    def find_or_create_worker
-      worker = workers.find { |item| item.running_task.nil? }
+    def find_or_create_worker(worker_class: )
+      worker = workers.find { |item| item.class == worker_class && item.running_task.nil? }
 
       unless worker
         @worker_id = (@worker_id || 0) + 1
@@ -234,9 +236,13 @@ module Fasten
 
     def dispatch_pending_tasks
       while tasks.waiting? && tasks.running.count < jobs
-        worker = find_or_create_worker
-
         task = tasks.next
+
+        task_worker_class = task.worker_class || worker_class
+        task_worker_class = Object.const_get(task_worker_class) if task_worker_class.is_a? String
+
+        worker = find_or_create_worker worker_class: task_worker_class
+
         log_ini task, "on worker #{worker}"
         worker.send_request_to_child(task)
         tasks.running << task

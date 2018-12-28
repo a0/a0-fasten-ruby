@@ -4,16 +4,17 @@ module Fasten
   class Task
     include Fasten::Support::State
 
-    attr_accessor :name, :after, :shell, :ruby
+    attr_accessor :name, :after, :shell, :ruby, :worker_class
     attr_accessor :dependants, :depends, :request, :response, :worker, :run_score, :block
 
-    def initialize(name:, shell: nil, ruby: nil, block: nil, request: nil, after: nil)
+    def initialize(name:, shell: nil, ruby: nil, block: nil, request: nil, after: nil, worker_class: nil)
       self.name = name
       self.shell = shell
       self.ruby = ruby
       self.block = block
       self.request = request
       self.after = after
+      self.worker_class = worker_class
     end
 
     def marshal_dump
