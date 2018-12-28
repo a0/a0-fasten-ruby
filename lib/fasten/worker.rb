@@ -31,7 +31,7 @@ module Fasten
       self.name = name
       self.spinner = 0
 
-      initialize_logger(log_file: runner&.log_file)
+      initialize_logger(log_file: runner.log_file) if runner
     end
 
     def perform(task)
