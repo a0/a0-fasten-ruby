@@ -178,7 +178,7 @@ module Fasten
     end
 
     def show_error_tasks
-      task_error_list.each do |task|
+      tasks.failed.each do |task|
         log_info "task: #{task} error:#{task.error}\n#{task.error&.backtrace&.join("\n")}"
       end
     end
@@ -188,7 +188,7 @@ module Fasten
 
       show_error_tasks
 
-      message = "Stopping because the following tasks failed: #{task_error_list.map(&:to_s).join(', ')}"
+      message = "Stopping because the following tasks failed: #{tasks.failed.map(&:to_s).join(', ')}"
 
       if developer
         ui.cleanup
