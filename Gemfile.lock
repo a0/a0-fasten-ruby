@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    fasten (0.8.6)
+    fasten (0.8.8)
       binding_of_caller
       hirb
       os
@@ -20,7 +20,7 @@ GEM
     hirb (0.7.3)
     jaro_winkler (1.5.1)
     method_source (0.9.1)
-    os (1.0.0)
+    os (1.0.1)
     parallel (1.12.1)
     parser (2.5.3.0)
       ast (~> 2.4.0)
