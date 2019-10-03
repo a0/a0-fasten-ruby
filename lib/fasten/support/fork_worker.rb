@@ -57,8 +57,11 @@ module Fasten
       end
 
       def create_pipes
-        self.child_read, self.parent_write = IO.pipe
-        self.parent_read, self.child_write = IO.pipe
+        self.child_read, self.parent_write = IO.pipe binmode: true
+        self.parent_read, self.child_write = IO.pipe binmode: true
+
+        child_write.set_encoding 'binary'
+        parent_write.set_encoding 'binary'
       end
 
       def close_parent_pipes
