@@ -37,7 +37,7 @@ module Fasten
       def save_stats
         return unless @stats_path && stats_data
 
-        keys = %w[state kind name run cnt avg std err]
+        keys = %w[state kind name run cnt avg std err ini fin]
 
         CSV.open(@stats_path, 'wb') do |csv|
           csv << keys
