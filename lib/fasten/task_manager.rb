@@ -149,9 +149,10 @@ module Fasten
 
       @pending -= to_move
       @waiting += to_move
-      @waiting.sort_by!.with_index do |x, index|
-        x.state = :WAIT
-        [-x.run_score, index]
+      @waiting.sort_by!.with_index do |task, index|
+        task.state = :WAIT
+        last_avg = task.last && task.last['avg'] || 0
+        [-task.run_score, -last_avg.to_f, index]
       end
     end
   end

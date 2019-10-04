@@ -25,6 +25,10 @@ module Fasten
           stats_data << row.to_h
         end
 
+        @tasks.each do |task|
+          stats_last(task)
+        end
+
         @tasks.waiting = nil
       rescue StandardError
         nil
