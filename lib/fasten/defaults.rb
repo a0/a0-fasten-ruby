@@ -43,5 +43,9 @@ module Fasten
     def default_developer
       STDIN.tty? && STDOUT.tty?
     end
+
+    def default_priority
+      :dependants
+    end
   end
 end

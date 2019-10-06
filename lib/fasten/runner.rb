@@ -18,21 +18,21 @@ module Fasten
     include Fasten::Support::UI
     include Fasten::Support::Yaml
 
-    attr_accessor :name, :stats, :summary, :jobs, :worker_class, :fasten_dir, :use_threads, :ui_mode, :developer, :workers, :queue, :tasks
+    attr_accessor :name, :stats, :summary, :jobs, :worker_class, :fasten_dir, :use_threads, :ui_mode, :developer, :workers, :queue, :tasks, :priority
 
     def initialize(**options)
-      %i[name stats summary jobs worker_class fasten_dir use_threads ui_mode developer].each do |key|
+      %i[name stats summary jobs worker_class fasten_dir use_threads ui_mode developer priority].each do |key|
         options[key] = Fasten.send "default_#{key}" unless options.key? key
       end
 
-      @tasks = TaskManager.new(targets: options[:targets] || [])
+      @tasks = TaskManager.new(targets: options[:targets] || [], runner: self)
       @workers = []
 
       reconfigure(options)
     end
 
     def reconfigure(**options)
-      %i[name stats summary jobs worker_class fasten_dir use_threads ui_mode developer].each do |key|
+      %i[name stats summary jobs worker_class fasten_dir use_threads ui_mode developer priority].each do |key|
         send "#{key}=", options[key] if options.key? key
       end
 

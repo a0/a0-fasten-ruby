@@ -1,8 +1,8 @@
 module Fasten
   class TaskManager < Array # rubocop:disable Metrics/ClassLength
-    attr_reader :done, :failed, :pending, :running, :targets
+    attr_reader :done, :failed, :pending, :running, :targets, :runner
 
-    def initialize(targets: [])
+    def initialize(targets: [], runner:)
       super()
 
       @map = {}
@@ -12,6 +12,7 @@ module Fasten
       @running = []
       @targets = targets
       @waiting = nil
+      @runner = runner
     end
 
     def push(*items)
@@ -149,10 +150,20 @@ module Fasten
 
       @pending -= to_move
       @waiting += to_move
-      @waiting.sort_by!.with_index do |task, index|
-        task.state = :WAIT
-        last_avg = task.last && task.last['avg'] || 0
-        [-task.run_score, -last_avg.to_f, index]
+      case @runner.priority
+      when :dependants
+        @waiting.sort_by!.with_index do |task, index|
+          task.state = :WAIT
+          [-task.run_score, index]
+        end
+      when :dependants_avg
+        @waiting.sort_by!.with_index do |task, index|
+          task.state = :WAIT
+          last_avg = task.last && task.last['avg'] || 0
+          [-task.run_score, -last_avg.to_f, index]
+        end
+      else
+        raise "Unknown priority #{@runner.priority}"
       end
     end
   end
