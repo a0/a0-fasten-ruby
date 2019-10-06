@@ -116,7 +116,7 @@ module Fasten
     end
 
     def should_wait_for_running_tasks?
-      tasks.running? && (tasks.no_waiting? || tasks.failed? || %i[PAUSING QUITTING].include?(state)) || tasks.running.count >= jobs
+      tasks.running? && (tasks.no_waiting? || tasks.failed? || %i[PAUSING QUITTING].include?(state)) || tasks.running.map(&:weight).sum >= jobs
     end
 
     def wait_for_running_tasks
