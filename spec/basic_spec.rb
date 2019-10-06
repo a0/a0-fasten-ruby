@@ -1,7 +1,7 @@
 RSpec.shared_examples 'basic funcionality' do |use_threads|
   process_model = use_threads ? 'threads' : 'processes'
 
-  max = OS.windows? ? 10 : 500
+  max = OS.windows? ? 10 : 100
 
   it "using #{process_model}, has a version number" do
     expect(Fasten::VERSION).not_to be nil
