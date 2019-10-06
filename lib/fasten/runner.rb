@@ -235,7 +235,7 @@ module Fasten
     end
 
     def dispatch_pending_tasks
-      while tasks.waiting? && tasks.running.count < jobs
+      while tasks.waiting? && tasks.running.map(&:weight).sum < jobs
         task = tasks.next
 
         task_worker_class = task.worker_class || worker_class

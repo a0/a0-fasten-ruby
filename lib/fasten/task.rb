@@ -5,15 +5,16 @@ module Fasten
     include Fasten::Support::State
 
     attr_accessor :name, :after, :shell, :ruby, :worker_class
-    attr_accessor :dependants, :depends, :request, :response, :worker, :run_score, :block
+    attr_accessor :dependants, :depends, :request, :response, :worker, :run_score, :weight, :block
 
-    def initialize(name:, shell: nil, ruby: nil, block: nil, request: nil, after: nil, worker_class: nil)
+    def initialize(name:, shell: nil, ruby: nil, block: nil, request: nil, after: nil, weight: 1, worker_class: nil)
       self.name = name
       self.shell = shell
       self.ruby = ruby
       self.block = block
       self.request = request
       self.after = after
+      self.weight = weight
       self.worker_class = worker_class
     end
 
