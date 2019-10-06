@@ -11,7 +11,7 @@ require 'fasten/support/yaml'
 require 'fasten/timeout_queue'
 
 module Fasten
-  class Runner
+  class Runner # rubocop:disable Metrics/ClassLength
     include Fasten::Support::Logger
     include Fasten::Support::State
     include Fasten::Support::Stats
@@ -217,7 +217,7 @@ module Fasten
       end
     end
 
-    def find_or_create_worker(worker_class: )
+    def find_or_create_worker(worker_class:)
       worker = workers.find { |item| item.class == worker_class && item.running_task.nil? }
 
       unless worker

@@ -1,7 +1,7 @@
 require 'English'
 require 'fileutils'
 
-Fasten.register do
+Fasten.register do # rubocop:disable Metrics/BlockLength
   task 'clean' do
     puts "#{$PID} running clean…"
     sleep 0.5

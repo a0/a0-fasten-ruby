@@ -98,9 +98,9 @@ module Fasten
 
       perform(task)
       task.state = :DONE
-    rescue StandardError => error
+    rescue StandardError => e
       task.state = :FAIL
-      task.error = WorkerError.new(error)
+      task.error = WorkerError.new(e)
     ensure
       log_fin task, 'perform_task'
       send_response_to_parent(task)

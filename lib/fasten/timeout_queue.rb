@@ -13,7 +13,7 @@ module Fasten
       end
     end
 
-    def receive_with_timeout(timeout = nil) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
+    def receive_with_timeout(timeout = nil) # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       @mutex.synchronize do
         if timeout.nil?
           # wait indefinitely until there is an element in the queue

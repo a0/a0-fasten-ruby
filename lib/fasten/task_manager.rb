@@ -1,5 +1,5 @@
 module Fasten
-  class TaskManager < Array
+  class TaskManager < Array # rubocop:disable Metrics/ClassLength
     attr_reader :done, :failed, :pending, :running, :targets
 
     def initialize(targets: [])

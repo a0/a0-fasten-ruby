@@ -21,10 +21,12 @@ Style:
   Exclude:
     - 'lib/fasten/ui/curses.rb'
 Metrics/AbcSize:
-  Max: 17
+  Max: 25
 Metrics/MethodLength:
   Max: 15
 Metrics/ParameterLists:
   Max: 8
 Layout/AlignHash:
   EnforcedHashRocketStyle: table
+Style/FormatStringToken:
+  Enabled: false

@@ -16,8 +16,8 @@ module Fasten
       def kill
         log_info 'Removing worker'
         thread.exit
-      rescue StandardError => error
-        log_warn "Ignoring error killing worker #{self}, error: #{error}"
+      rescue StandardError => e
+        log_warn "Ignoring error killing worker #{self}, error: #{e}"
       ensure
         @queue.clear
       end

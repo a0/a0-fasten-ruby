@@ -16,7 +16,7 @@ module Fasten
       target.send :respond_to_missing?, name, include_private
     end
 
-    def method_missing(method, *args, &block) # rubocop:disable MethodMissingSuper
+    def method_missing(method, *args, &block) # rubocop:disable Style/MethodMissingSuper
       target = Thread.current[:FASTEN_STD_THREAD_PROXY] || @original
       target.send method, *args, &block
     end

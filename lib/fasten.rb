@@ -50,19 +50,19 @@ module Fasten
           puts "Fasten: loading #{path}"
           load path
         else
-          STDERR.puts "Fasten: file/folder not found: #{path}"
+          warn "Fasten: file/folder not found: #{path}"
           exit 1
         end
       end
     end
 
-    def opt_parser # rubocop:disable Metrics/MethodLength
+    def opt_parser # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       return @opt_parser if defined? @opt_parser
 
       @options = { developer: false }
       @load_path = []
 
-      @opt_parser = OptionParser.new do |opts|
+      @opt_parser = OptionParser.new do |opts| # rubocop:disable Metrics/BlockLength
         opts.banner = "Usage: #{$PROGRAM_NAME} [options] [targets]"
         opts.separator ''
         opts.separator 'Examples:'
