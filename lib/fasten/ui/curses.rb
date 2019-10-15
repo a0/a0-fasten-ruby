@@ -237,6 +237,9 @@ module Fasten
 
         str ||= icon ? "#{icon} #{task}" : task.to_s
 
+        delta = x + str.length - n_cols
+        str = str[0...-delta] if delta.positive?
+
         attrset attrs if attrs
         addstr str
         attroff attrs if attrs
