@@ -40,7 +40,7 @@ It has been released so people can try it and make feature requests, comments an
 - [x] Press ⬅️ or ➡️ keys to dynamically increase/decrease number of jobs
 - [ ] Use ⬆️ and ⬇️ to select tasks
 - [ ] Calculate ETA, assuming all tasks take same time
-- [ ] Calculate ETA, based on saved tasks statistics
+- [x] Calculate ETA, based on saved tasks statistics
 - [ ] Live tail -f of selected tasks
 
 ### UI/Console
