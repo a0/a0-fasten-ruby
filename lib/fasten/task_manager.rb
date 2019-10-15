@@ -159,7 +159,7 @@ module Fasten
       when :dependants_avg
         @waiting.sort_by!.with_index do |task, index|
           task.state = :WAIT
-          last_avg = task.last && task.last['avg'] || 0
+          last_avg = task.last_avg || 0
           [-task.run_score, -last_avg.to_f, index]
         end
       else

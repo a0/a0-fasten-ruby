@@ -26,8 +26,11 @@ module Fasten
         end
 
         @tasks.each do |task|
-          stats_last(task)
+          task.runner = self
+          task.last
         end
+        self.runner = self
+        last
 
         @tasks.waiting = nil
       rescue StandardError
@@ -125,9 +128,7 @@ module Fasten
       end
 
       def stats_last(item)
-        return item.last if item.last
-
-        item.last = stats_data.select { |e| e['kind'] == item.kind && e['name'] == item.name }.last || {}
+        stats_data.select { |e| e['kind'] == item.kind && e['name'] == item.name }.last || {}
       end
 
       def update_stats(history, entry)

@@ -1,7 +1,7 @@
 module Fasten
   module Support
     module State
-      attr_accessor :error, :ini, :fin, :dif, :last
+      attr_accessor :error, :ini, :fin, :dif, :runner
       attr_writer :state
 
       def state
@@ -26,6 +26,22 @@ module Fasten
 
       def quitting?
         state == :QUITTING
+      end
+
+      def last
+        return @last if defined? @last
+
+        return {} unless @runner
+
+        @last = runner.stats_last(self)
+      end
+
+      def last_avg
+        @last_avg ||= last['avg']&.to_f
+      end
+
+      def last_err
+        @last_err ||= last['err']&.to_f
       end
     end
   end

@@ -16,6 +16,8 @@ module Fasten
 
       SPINNER_STR = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
       SPINNER_LEN = SPINNER_STR.length
+      MOON_STR = '🌑🌒🌓🌔🌕'
+      MOON_LEN = MOON_STR.length
       PROGRESSBAR_STR = ' ▏▎▍▌▋▊▉'
       PROGRESSBAR_LEN = PROGRESSBAR_STR.length
 
@@ -194,6 +196,22 @@ module Fasten
         end
       end
 
+      def ui_task_clock(task, cur, avg)
+        return unless task.ini
+
+        dif = cur - task.ini
+        avg = avg.to_f
+        if task.ini && avg.positive?
+          percent = dif / avg
+          index = (percent * MOON_LEN).to_i
+          index = MOON_LEN - 1 if index > MOON_LEN - 1
+
+          format '  %.2f s %s ', dif, MOON_STR[index]
+        else
+          format '  %.2f s   ', dif
+        end
+      end
+
       def ui_task_color(task)
         rev = task == selected ? A_REVERSE : 0
 
@@ -231,14 +249,38 @@ module Fasten
           worker.spinner = (worker.spinner + 1) % SPINNER_LEN if worker.running?
         end
 
+        cur = Time.new
+
         count_done = tasks.done.count
         count_total = tasks.count
         tl = count_total.to_s.length
-        col_ini = ui_text_aligned(2, :left, format("Tasks %#{tl}d/%d", count_done, count_total)) + 1
-        col_fin = n_cols - 5
-        ui_text_aligned(2, :right, "#{(count_done * 100 / count_total).to_i}%") if count_total.positive?
+        percentstr = count_total.positive? && " #{(count_done * 100 / count_total).to_i}%"
+        elapsed_str = format ' %.2f s', (dif = cur - runner.ini) if runner.ini
 
-        ui_progressbar(2, col_ini, col_fin, count_done, count_total)
+        @stat_str ||= begin
+          @runner_last_avg = runner.last_avg
+          if runner.last_avg && runner.last_err
+            format '≈ %.2f s ± %.2f', runner.last_avg, runner.last_err
+          elsif runner.last_avg
+            format '≈ %.2f s', runner.last_avg
+          end
+        end
+
+        end_str = [elapsed_str, @stat_str].compact.join(' ')
+
+        if @runner_last_avg
+          a = dif
+          b = @runner_last_avg
+        else
+          a = count_done
+          b = count_total
+        end
+
+        col_ini = ui_text_aligned(2, :left, format("Tasks %#{tl}d/%d%s", count_done, count_total, percentstr)) + 1
+        col_fin = n_cols - 1 - end_str.length
+        ui_text_aligned(2, :right, end_str)
+
+        ui_progressbar(2, col_ini, col_fin, a, b)
 
         max = 2
         list = tasks.sort_by.with_index { |x, index| [x.run_score, index] }
@@ -260,13 +302,16 @@ module Fasten
             end
           else
             x = max + 1
-            last = runner.stats_last(task)
+            last_avg = task.last_avg
+            last_err = task.last_err
             if task.dif
               str = format '  %.2f s', task.dif
-            elsif last['avg'] && last['err']
-              str = format '≈ %.2f s ± %.2f %s', last['avg'], last['err'], task.worker&.name
-            elsif last['avg']
-              str = format '≈ %.2f s %s', last['avg'], task.worker&.name
+            elsif last_avg && last_err
+              str = format '%s ≈ %.2f s ± %.2f %s', ui_task_clock(task, cur, last_avg), last_avg, last_err, task.worker&.name
+            elsif last_avg
+              str = format '%s ≈ %.2f s %s', ui_task_clock(task, cur, last_avg), last_avg, task.worker&.name
+            else
+              str = ui_task_clock(task, cur, 0)
             end
             ui_task_string(task, 3 + index, x, str: str) if str
           end
