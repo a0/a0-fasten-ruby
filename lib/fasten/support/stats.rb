@@ -21,16 +21,16 @@ module Fasten
         return unless @stats_path && File.exist?(@stats_path)
 
         self.stats_data = []
-        CSV.foreach(@stats_path, headers: true) do |row|
+        CSV.foreach(@stats_path, headers: true, converters: [:all]) do |row|
           stats_data << row.to_h
         end
 
         @tasks.each do |task|
           task.runner = self
-          task.last
+          task.last_stat
         end
         self.runner = self
-        last
+        last_stat
 
         @tasks.waiting = nil
       rescue StandardError
@@ -40,7 +40,7 @@ module Fasten
       def save_stats
         return unless @stats_path && stats_data
 
-        keys = %w[state kind name run cnt avg std err ini fin]
+        keys = %w[state kind name run cnt avg std err ini fin deps]
 
         CSV.open(@stats_path, 'wb') do |csv|
           csv << keys
@@ -58,6 +58,7 @@ module Fasten
           'ini'    => target.ini.to_f,
           'fin'    => target.fin.to_f,
           'run'    => target.fin - target.ini,
+          'deps'   => target.deps,
           'worker' => target.respond_to?(:worker) ? target.worker.name : nil }
       end
 
@@ -76,7 +77,7 @@ module Fasten
         stats_data << entry
         stats_entries << entry
 
-        history = stats_history(entry)
+        history = stats_run_history(entry)
 
         update_stats(history, entry)
       end
@@ -123,12 +124,12 @@ module Fasten
                     task: hformat(sub), runner: hformat(tot, sub), saved: hformat(sub - tot, sub), jobs: jobs.to_s)
       end
 
-      def stats_history(entry)
-        stats_data.select { |e| e['state'] == entry['state'] && e['kind'] == entry['kind'] && e['name'] == entry['name'] }.map { |x| x['run'].to_f }
+      def stats_run_history(entry)
+        stats_data.select { |item| %w[state kind name deps].all? { |key| item[key] == entry[key] } }.map { |item| item['run'] }
       end
 
-      def stats_last(item)
-        stats_data.select { |e| e['kind'] == item.kind && e['name'] == item.name }.last || {}
+      def stats_last(target)
+        stats_data.select { |item| %w[kind name deps].all? { |key| item[key] == target.send(key) } }.last || {}
       end
 
       def update_stats(history, entry)

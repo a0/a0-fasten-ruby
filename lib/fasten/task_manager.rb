@@ -160,7 +160,7 @@ module Fasten
         @waiting.sort_by!.with_index do |task, index|
           task.state = :WAIT
           last_avg = task.last_avg || 0
-          [-task.run_score, -last_avg.to_f, index]
+          [-task.run_score, -last_avg, index]
         end
       else
         raise "Unknown priority #{@runner.priority}"
