@@ -49,7 +49,7 @@ module Fasten
         return unless old.count != orig.count
 
         (orig - old).each do |task|
-          puts "Time: #{hformat Time.new - runner.ini} #{message} #{hformat task.dif} Task #{task}"
+          puts "Time: #{hformat Time.new - runner.ini} #{message} #{hformat task.dif} #{task.worker} Task #{task}"
           old << task
         end
       end
