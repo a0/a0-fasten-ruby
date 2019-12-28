@@ -54,6 +54,7 @@ module Fasten
       self.state = :RUNNING
       log_ini self, running_counters
       load_stats
+      touch_task_logs
 
       run_ui do
         perform_loop
@@ -67,6 +68,15 @@ module Fasten
       stats_summary if summary
     ensure
       save_stats
+    end
+
+    def touch_task_logs
+      FileUtils.mkdir_p "#{runner.fasten_dir}/log/task/"
+      tasks.each do |task|
+        path = "#{runner.fasten_dir}/log/task/#{task.name}.log"
+        puts "Fasten: creating log #{path}"
+        FileUtils.touch path
+      end
     end
 
     def map(list, &block)
