@@ -71,9 +71,9 @@ module Fasten
     end
 
     def touch_task_logs
-      FileUtils.mkdir_p "#{runner.fasten_dir}/log/task/"
+      FileUtils.mkdir_p "#{fasten_dir}/log/task/"
       tasks.each do |task|
-        path = "#{runner.fasten_dir}/log/task/#{task.name}.log"
+        path = "#{fasten_dir}/log/task/#{task.name}.log"
         puts "Fasten: creating log #{path}"
         FileUtils.touch path
       end
