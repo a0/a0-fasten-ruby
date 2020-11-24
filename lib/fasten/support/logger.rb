@@ -26,10 +26,8 @@ module Fasten
         if log_file
           self.log_file = log_file
         else
-          log_path ||= "#{fasten_dir}/log/#{kind}/#{name}.log"
-          FileUtils.mkdir_p File.dirname(log_path)
-          self.log_file = File.new(log_path, 'a')
-          self.log_file.sync = true
+          self.log_file ||= "#{fasten_dir}/log/#{kind}/#{name}.log"
+          FileUtils.mkdir_p File.dirname(self.log_file)
         end
         self.logger = ::Logger.new self.log_file, level: Fasten.logger.level, progname: Fasten.logger.progname
       end

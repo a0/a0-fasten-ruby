@@ -16,6 +16,20 @@ module Fasten
       self.after = after
       self.weight = weight
       self.worker_class = worker_class
+
+      # ObjectSpace.define_finalizer(self) do
+      #   puts "I am dying! pid: #{Process.pid} thread: #{Thread.current} TASK #{@name}"
+      # end
+
+      block&.object_id
+      # block && begin
+        
+      #   # puts "block_id: #{block.object_id} for task #{@name}"
+      # end
+
+      # block && ObjectSpace.define_finalizer(block) do
+      #   puts "I am dying! pid: #{Process.pid} thread: #{Thread.current} TASK #{@name} BLOCK"
+      # end
     end
 
     def marshal_dump
@@ -24,7 +38,11 @@ module Fasten
 
     def marshal_load(data)
       @name, @state, @ini, @fin, @dif, @request, @response, @shell, @ruby, block_id, @error = data
-      @block = ObjectSpace._id2ref block_id if block_id
+      @block = begin
+        ObjectSpace._id2ref block_id.to_i if block_id
+      rescue StandardError
+        # pass
+      end
 
       raise "Sorry, unable to get block for task #{self}, please try using threads" if block_id && !@block.is_a?(Proc)
     end

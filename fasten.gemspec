@@ -1,6 +1,4 @@
-lib = File.expand_path('lib', __dir__)
-$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'fasten/version'
+require_relative 'lib/fasten/version'
 require 'os'
 
 Gem::Specification.new do |spec|
@@ -13,6 +11,13 @@ Gem::Specification.new do |spec|
   spec.description   = 'Fasten your seatbelts! Run jobs in parallel, intelligently.'
   spec.homepage      = 'https://github.com/a0/a0-fasten-ruby/'
   spec.license       = 'MIT'
+  spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
+
+  spec.metadata['allowed_push_host'] = 'https://rubygems.org'
+
+  spec.metadata['homepage_uri'] = spec.homepage
+  spec.metadata['source_code_uri'] = spec.homepage
+  spec.metadata['source_code_uri'] = 'https://github.com/a0/a0-fasten-ruby/CHANGELOG.md'
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
@@ -23,19 +28,12 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_development_dependency 'bundler', '~> 1.17.1'
   spec.add_development_dependency 'curses' unless OS.windows?
   spec.add_development_dependency 'pry'
-  spec.add_development_dependency 'rake', '~> 10.0'
-  spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop'
 
   spec.add_runtime_dependency 'binding_of_caller'
   spec.add_runtime_dependency 'hirb'
   spec.add_runtime_dependency 'os'
   spec.add_runtime_dependency 'parallel'
-
-  raise 'RubyGems 2.0 or newer is required to protect against public gem pushes.' unless spec.respond_to?(:metadata)
-
-  spec.metadata['allowed_push_host'] = 'https://rubygems.org'
 end

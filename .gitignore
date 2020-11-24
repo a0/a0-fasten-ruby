@@ -9,6 +9,8 @@
 
 # rspec failure tracking
 .rspec_status
+
+# custom ignores
 /fasten/log
 /demo/fasten/log
 *.testfile

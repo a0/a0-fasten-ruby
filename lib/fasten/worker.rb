@@ -89,6 +89,7 @@ module Fasten
       perform_task task
     ensure
       restore_std
+
       logger.reopen(log_file)
       log_fin task, 'run_task'
     end
