@@ -75,65 +75,24 @@ module Fasten
       end
 
       def redirect_std(path)
-        # STDERR.puts <<~FIN
-        #   --- redirect_std PID: #{$$} Thread: #{Thread.current} path: #{path} ini ---
-        #     STDOUT: #{STDOUT} STDOUT&.closed?: #{STDOUT&.closed?}
-        #     $stdout: #{$stdout} $stdout&.closed?: #{$stdout&.closed?}
-        #     @saved_stdout_constant: #{@saved_stdout_constant} @saved_stdout_constant&.closed?: #{@saved_stdout_constant&.closed?}
-        #     @redirect_log: #{@redirect_log}
-        #     log_file: #{log_file}
-        #     logger.logdev.filename: #{logger.instance_variable_get(:@logdev).filename}
-        # FIN
-        @saved_stdout_constant = STDOUT.clone
-        @saved_stderr_constant = STDERR.clone
+        @saved_stdout_constant ||= $stdout.clone
+        @saved_stderr_constant ||= $stderr.clone
 
         FileUtils.mkdir_p File.dirname(path)
         @redirect_log = File.new path, 'a'
         @redirect_log.sync = true
 
-        STDOUT.reopen @redirect_log
-        STDERR.reopen @redirect_log
+        $stdout.reopen @redirect_log
+        $stderr.reopen @redirect_log
 
         logger.reopen(@redirect_log)
-
-        # STDERR.puts <<~FIN
-        #   --- redirect_std PID: #{$$} Thread: #{Thread.current} path: #{path} --- fin
-        #     STDOUT: #{STDOUT} STDOUT&.closed?: #{STDOUT&.closed?}
-        #     $stdout: #{$stdout} $stdout&.closed?: #{$stdout&.closed?}
-        #     @saved_stdout_constant: #{@saved_stdout_constant} @saved_stdout_constant&.closed?: #{@saved_stdout_constant&.closed?}
-        #     @redirect_log: #{@redirect_log}
-        #     log_file: #{log_file}
-        #     logger.logdev.filename: #{logger.instance_variable_get(:@logdev).filename}
-        # FIN
       end
 
       def restore_std
-        # STDERR.puts <<~FIN
-        #   --- restore_std PID: #{$$} Thread: #{Thread.current} ini ---
-        #     STDOUT: #{STDOUT} STDOUT&.closed?: #{STDOUT&.closed?}
-        #     $stdout: #{$stdout} $stdout&.closed?: #{$stdout&.closed?}
-        #     @saved_stdout_constant: #{@saved_stdout_constant} @saved_stdout_constant&.closed?: #{@saved_stdout_constant&.closed?}
-        #     @redirect_log: #{@redirect_log}
-        #     log_file: #{log_file}
-        #     logger.logdev.filename: #{logger.instance_variable_get(:@logdev).filename}
-        # FIN
         @redirect_log.close
 
-        STDOUT.reopen @saved_stdout_constant
-        STDERR.reopen @saved_stderr_constant
-
-        @saved_stdout_constant = nil
-        @saved_stderr_constant = nil
-
-        # STDERR.puts <<~FIN
-        #   --- restore_std PID: #{$$} Thread: #{Thread.current} fin ---
-        #     STDOUT: #{STDOUT} STDOUT&.closed?: #{STDOUT&.closed?}
-        #     $stdout: #{$stdout} $stdout&.closed?: #{$stdout&.closed?}
-        #     @saved_stdout_constant: #{@saved_stdout_constant} @saved_stdout_constant&.closed?: #{@saved_stdout_constant&.closed?}
-        #     @redirect_log: #{@redirect_log}
-        #     log_file: #{log_file}
-        #     logger.logdev.filename: #{logger.instance_variable_get(:@logdev).filename}
-        # FIN
+        $stdout.reopen @saved_stdout_constant
+        $stderr.reopen @saved_stderr_constant
       end
     end
   end

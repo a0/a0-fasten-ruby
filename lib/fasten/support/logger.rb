@@ -29,7 +29,13 @@ module Fasten
           self.log_file ||= "#{fasten_dir}/log/#{kind}/#{name}.log"
           FileUtils.mkdir_p File.dirname(self.log_file)
         end
+
+        close_logger
         self.logger = ::Logger.new self.log_file, level: Fasten.logger.level, progname: Fasten.logger.progname
+      end
+
+      def close_logger
+        logger.close if logger.is_a? ::Logger
       end
 
       def log_ini(object, message = nil)
@@ -49,7 +55,7 @@ end
 
 Fasten.logger ||=
   begin
-    Logger.new STDOUT, level: Logger::DEBUG, progname: $PROGRAM_NAME
+    Logger.new $stdout, level: Logger::DEBUG, progname: $PROGRAM_NAME
   rescue StandardError
     nil
   end

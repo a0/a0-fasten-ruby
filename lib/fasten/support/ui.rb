@@ -6,7 +6,7 @@ module Fasten
       def ui
         require 'fasten/ui/curses'
 
-        @ui ||= if ui_mode.to_s == 'curses' && STDIN.tty? && STDOUT.tty?
+        @ui ||= if ui_mode.to_s == 'curses' && $stdin.tty? && $stdout.tty?
                   Fasten::UI::Curses.new(runner: self)
                 else
                   Fasten::UI::Console.new(runner: self)

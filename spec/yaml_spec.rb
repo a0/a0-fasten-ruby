@@ -37,6 +37,6 @@ RSpec.shared_examples 'yaml' do |use_threads|
 end
 
 RSpec.describe Fasten do
-  it_behaves_like 'yaml', false if OS.posix?
-  it_behaves_like 'yaml', true
+  it_behaves_like 'yaml', false if OS.posix? && !ENV['FASTEN_RSPEC_NO_PROCESSES']
+  it_behaves_like 'yaml', true  unless ENV['FASTEN_RSPEC_NO_THREADS']
 end

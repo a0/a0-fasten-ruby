@@ -1,4 +1,4 @@
-RSpec.shared_examples 'basic funcionality' do |use_threads|
+RSpec.shared_examples 'basic functionality' do |use_threads|
   process_model = use_threads ? 'threads' : 'processes'
 
   max = OS.windows? ? 10 : 100
@@ -42,7 +42,7 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
       l[m][n] << { task: key, after: nil, shell: shell }
     end
 
-    l.values.each do |value|
+    l.each_value do |value|
       depend = nil
       value.values.flatten.sort_by { |k| k[:task] }.each do |item|
         item[:after] = depend
@@ -65,6 +65,6 @@ RSpec.shared_examples 'basic funcionality' do |use_threads|
 end
 
 RSpec.describe Fasten do
-  it_behaves_like 'basic funcionality', false if OS.posix?
-  it_behaves_like 'basic funcionality', true
+  it_behaves_like 'basic functionality', false if OS.posix? && !ENV['FASTEN_RSPEC_NO_PROCESSES']
+  it_behaves_like 'basic functionality', true  unless ENV['FASTEN_RSPEC_NO_THREADS']
 end

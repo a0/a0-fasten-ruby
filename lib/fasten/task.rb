@@ -4,8 +4,7 @@ module Fasten
   class Task
     include Fasten::Support::State
 
-    attr_accessor :name, :after, :shell, :ruby, :worker_class
-    attr_accessor :dependants, :depends, :request, :response, :worker, :run_score, :weight, :block
+    attr_accessor :name, :after, :shell, :ruby, :worker_class, :dependants, :depends, :request, :response, :worker, :run_score, :weight, :block
 
     def initialize(name:, shell: nil, ruby: nil, block: nil, request: nil, after: nil, weight: 1, worker_class: nil)
       self.name = name
@@ -23,7 +22,7 @@ module Fasten
 
       block&.object_id
       # block && begin
-        
+
       #   # puts "block_id: #{block.object_id} for task #{@name}"
       # end
 

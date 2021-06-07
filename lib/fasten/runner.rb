@@ -37,7 +37,6 @@ module Fasten
       end
 
       initialize_stats
-      initialize_logger
     end
 
     def task(name, **opts, &block)
@@ -51,6 +50,8 @@ module Fasten
     end
 
     def perform
+      initialize_logger
+      StdThreadProxy.install if use_threads
       self.state = :RUNNING
       log_ini self, running_counters
       load_stats
@@ -67,6 +68,8 @@ module Fasten
 
       stats_summary if summary
     ensure
+      StdThreadProxy.uninstall if use_threads
+      close_logger
       save_stats
     end
 
@@ -228,7 +231,7 @@ module Fasten
     end
 
     def find_or_create_worker(worker_class:)
-      worker = workers.find { |item| item.class == worker_class && item.running_task.nil? }
+      worker = workers.find { |item| item.instance_of?(worker_class) && item.running_task.nil? }
 
       unless worker
         @worker_id = (@worker_id || 0) + 1

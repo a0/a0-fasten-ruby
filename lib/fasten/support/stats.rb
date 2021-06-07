@@ -5,8 +5,8 @@ require 'fileutils'
 module Fasten
   module Support
     module Stats
-      attr_writer :stats_data, :stats_entries
-      attr_reader :stats_path
+      # attr_writer :stats_data, :stats_entries
+      # attr_reader :stats_path
 
       def initialize_stats
         return unless stats
@@ -20,7 +20,7 @@ module Fasten
       def load_stats
         return unless @stats_path && File.exist?(@stats_path)
 
-        self.stats_data = []
+        @stats_data = []
         CSV.foreach(@stats_path, headers: true, converters: [:all]) do |row|
           stats_data << row.to_h
         end

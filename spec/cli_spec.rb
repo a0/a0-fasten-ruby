@@ -30,6 +30,6 @@ RSpec.shared_examples 'cli' do |use_threads|
 end
 
 RSpec.describe Fasten do
-  it_behaves_like 'cli', false if OS.posix?
-  it_behaves_like 'cli', true
+  it_behaves_like 'cli', false if OS.posix? && !ENV['FASTEN_RSPEC_NO_PROCESSES']
+  it_behaves_like 'cli', true  unless ENV['FASTEN_RSPEC_NO_THREADS']
 end

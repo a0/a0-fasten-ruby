@@ -34,6 +34,6 @@ RSpec.shared_examples 'map functionality' do |use_threads|
 end
 
 RSpec.describe Fasten do
-  it_behaves_like 'map functionality', false if OS.posix?
-  it_behaves_like 'map functionality', true
+  it_behaves_like 'map functionality', false if OS.posix? && !ENV['FASTEN_RSPEC_NO_PROCESSES']
+  it_behaves_like 'map functionality', true  unless ENV['FASTEN_RSPEC_NO_THREADS']
 end

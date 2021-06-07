@@ -2,7 +2,7 @@ module Fasten
   class TaskManager < Array # rubocop:disable Metrics/ClassLength
     attr_reader :done, :failed, :pending, :running, :targets, :runner
 
-    def initialize(targets: [], runner:)
+    def initialize(runner:, targets: [])
       super()
 
       @map = {}
@@ -120,6 +120,10 @@ module Fasten
         mark_needed(task)
       end
 
+      setup_pending
+    end
+
+    def setup_pending
       @pending.reject { |task| task.state == :NEED }.each do |task|
         @pending.delete task
         delete task

@@ -40,6 +40,6 @@ RSpec.shared_examples 'error handling' do |use_threads|
 end
 
 RSpec.describe Fasten do
-  it_behaves_like 'error handling', false if OS.posix?
-  it_behaves_like 'error handling', true
+  it_behaves_like 'error handling', false if OS.posix? && !ENV['FASTEN_RSPEC_NO_PROCESSES']
+  it_behaves_like 'error handling', true  unless ENV['FASTEN_RSPEC_NO_THREADS']
 end

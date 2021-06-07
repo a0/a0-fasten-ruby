@@ -54,7 +54,6 @@ module Fasten
       def restore_std
         @redirect_log&.close
         StdThreadProxy.thread_io = nil
-        logger.reopen(log_file)
       end
     end
   end

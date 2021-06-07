@@ -39,7 +39,7 @@ module Fasten
 
       def draw_title
         ui_text_aligned(0, :left, 'Fasten your seatbelts!')
-        ui_text_aligned(0, :center, name.to_s)
+        ui_text_aligned(0, :center, "#{name} #{$PID}")
         ui_text_aligned(0, :right, Time.new.to_s)
       end
 
@@ -127,11 +127,12 @@ module Fasten
       end
 
       def ui_jobs_summary
-        running_count = tasks.running.count
-        waiting_count = tasks.waiting.count
-        workers_count = workers.count
+        running = tasks.running.count
+        waiting = tasks.waiting.count
+        working = workers.count
+        idle    = working - running
 
-        "Procs running: #{running_count} idle: #{workers_count - running_count} waiting: #{waiting_count} #{runner.use_threads ? 'threads' : 'processes'}: #{jobs}"
+        "Procs running: #{running} idle: #{idle} waiting: #{waiting} #{runner.use_threads ? 'threads' : 'processes'}: #{jobs}"
       end
 
       def ui_jobs

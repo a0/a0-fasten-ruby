@@ -56,18 +56,26 @@ module Fasten
 
       def deps_str
         if is_a? Fasten::Task
-          if after.is_a? Array
-            after.sort_by do |task|
-              task.is_a?(Fasten::Task) ? task.name : task
-            end&.join(', ')
-          else
-            after
-          end
+          deps_str_task
         elsif is_a? Fasten::Runner
-          tasks.sort_by(&:name).map do |task|
-            [task.name, task.deps_str].compact.join(': ')
-          end.join("\n")
+          deps_str_runner
         end
+      end
+
+      def deps_str_task
+        if after.is_a? Array
+          after.sort_by do |task|
+            task.is_a?(Fasten::Task) ? task.name : task
+          end&.join(', ')
+        else
+          after
+        end
+      end
+
+      def deps_str_runner
+        tasks.sort_by(&:name).map do |task|
+          [task.name, task.deps_str].compact.join(': ')
+        end.join("\n")
       end
     end
   end

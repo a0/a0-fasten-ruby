@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Fasten your seatbelts! Run jobs in parallel, intelligently.'
   spec.homepage      = 'https://github.com/a0/a0-fasten-ruby/'
   spec.license       = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 2.3.0')
+  spec.required_ruby_version = Gem::Requirement.new('>= 2.6.0')
 
   spec.metadata['allowed_push_host'] = 'https://rubygems.org'
 
@@ -21,7 +21,7 @@ Gem::Specification.new do |spec|
 
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
-  spec.files         = Dir.chdir(File.expand_path(__dir__)) do
+  spec.files = Dir.chdir(File.expand_path(__dir__)) do
     `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features|demo)/}) }
   end
   spec.bindir        = 'exe'
@@ -31,6 +31,8 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'curses' unless OS.windows?
   spec.add_development_dependency 'pry'
   spec.add_development_dependency 'rubocop'
+  spec.add_development_dependency 'rubocop-rake'
+  spec.add_development_dependency 'rubocop-rspec'
 
   spec.add_runtime_dependency 'binding_of_caller'
   spec.add_runtime_dependency 'hirb'

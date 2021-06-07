@@ -1,4 +1,4 @@
-Metrics/LineLength:
+Layout/LineLength:
   Max: 160
 Style/Documentation:
   Enabled: false
@@ -23,10 +23,14 @@ Style:
 Metrics/AbcSize:
   Max: 25
 Metrics/MethodLength:
-  Max: 15
+  Max: 20
 Metrics/ParameterLists:
   Max: 8
-Layout/AlignHash:
+Layout/HashAlignment:
   EnforcedHashRocketStyle: table
 Style/FormatStringToken:
   Enabled: false
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 2.6

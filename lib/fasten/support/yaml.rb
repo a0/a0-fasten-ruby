@@ -5,9 +5,10 @@ module Fasten
     module Yaml
       def load_yaml(path)
         items = YAML.safe_load(File.read(path)).each do |name, params|
-          if params.is_a? String
+          case params
+          when String
             params = { after: params }
-          elsif params.is_a? Hash
+          when Hash
             transform_params(params)
           else
             params = {}
@@ -38,15 +39,16 @@ module Fasten
       protected
 
       def transform_params(params)
-        params.keys.each do |k|
-          val = params[k]
+        keys = params.keys
+
+        keys.each do |key|
+          val = params.delete key
 
           if val.is_a?(String) && (match = %r{^/(.+)/$}.match(val))
             val = Regexp.new(match[1])
           end
 
-          params[k.to_sym] = val
-          params.delete(k)
+          params[key.to_sym] = val
         end
       end
     end
