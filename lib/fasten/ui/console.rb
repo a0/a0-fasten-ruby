@@ -20,7 +20,7 @@ module Fasten
         puts <<~FIN
 
           = == === ==== ===== ====== ======= ======== ========= ==========
-          Fasten your seatbelts! #{'💺' * jobs} #{runner.use_threads ? 'threads' : 'processes'}
+          Fasten your seatbelts! #{'💺' * jobs} #{jobs} #{runner.use_threads ? 'threads' : 'processes'} #{tasks.count} tasks
 
           #{name}
         FIN
@@ -48,9 +48,29 @@ module Fasten
       def display_task_message(orig, old, message)
         return unless old.count != orig.count
 
+        elapsed_str = hformat Time.new - runner.ini
+
+        time_str = [elapsed_str, eta_str].compact.join(' ')
+
         (orig - old).each do |task|
-          puts "Time: #{hformat Time.new - runner.ini} #{message} #{hformat task.dif} #{task.worker} Task #{task}"
           old << task
+          puts "#{count_str(old.count, tasks.count)} Time: #{time_str} #{message} #{hformat task.dif} #{task.worker} Task #{task}"
+        end
+      end
+
+      def count_str(count, total)
+        len = total.to_s.length
+        format "%#{len}d/%#{len}d", count, total
+      end
+
+      def eta_str
+        @eta_str ||= begin
+          @runner_last_avg = runner.last_avg
+          if runner.last_avg && runner.last_err
+            format 'ETA ≈ %s ± %.2f', hformat(runner.last_avg), runner.last_err
+          elsif runner.last_avg
+            format 'ETA ≈ %s', hformat(runner.last_avg)
+          end
         end
       end
     end
