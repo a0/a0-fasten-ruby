@@ -47,7 +47,7 @@ It has been released so people can try it and make feature requests, comments an
 - [x] Console is the default if STDOUT/STDIN is not a tty
 - [x] Display each task as is being finished
 - [ ] Calculate ETA, assuming all tasks take same time
-- [ ] Calculate ETA, based on saved tasks statistics
+- [x] Calculate ETA, based on saved tasks statistics
 
 
 ### CLI
