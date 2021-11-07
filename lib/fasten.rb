@@ -113,7 +113,7 @@ module Fasten
 
       @options[:targets] = ARGV.to_a
 
-      runner @options
+      runner **@options
       @load_path = Dir['fasten/*_fasten.rb'] if @load_path.empty?
       load_fasten @load_path
 

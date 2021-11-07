@@ -33,4 +33,4 @@ Style/FormatStringToken:
 
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 2.6
+  TargetRubyVersion: 3.0

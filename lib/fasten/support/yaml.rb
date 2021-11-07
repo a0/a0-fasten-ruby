@@ -14,7 +14,7 @@ module Fasten
             params = {}
           end
 
-          task name, params
+          task name, **params
         end
 
         log_info "Loaded #{items.count} tasks from #{path}"

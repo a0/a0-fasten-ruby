@@ -14,8 +14,8 @@ RSpec.configure do |config|
 end
 
 class ErrorWorker < Fasten::Worker
-  def initialize(*)
-    super
+  def initialize(...)
+    super(...)
     @fail_at ||= ENV['FAILT_AT'] || 10
   end
 

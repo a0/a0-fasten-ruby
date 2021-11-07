@@ -28,7 +28,7 @@ module Fasten
       @tasks = TaskManager.new(targets: options[:targets] || [], runner: self)
       @workers = []
 
-      reconfigure(options)
+      reconfigure(**options)
     end
 
     def reconfigure(**options)
@@ -40,7 +40,9 @@ module Fasten
     end
 
     def task(name, **opts, &block)
-      tasks << task = Task.new(name: name, **opts, block: block)
+      opts[:name] = name
+      opts[:block] = block
+      tasks << task = Task.new(**opts)
 
       task
     end
@@ -111,7 +113,7 @@ module Fasten
           dispatch_pending_tasks
         end
 
-        break if tasks.no_running? && tasks.no_waiting? || state == :QUIT
+        break if (tasks.no_running? && tasks.no_waiting?) || state == :QUIT
       end
 
       remove_all_workers
@@ -129,7 +131,7 @@ module Fasten
     end
 
     def should_wait_for_running_tasks?
-      tasks.running? && (tasks.no_waiting? || tasks.failed? || %i[PAUSING QUITTING].include?(state)) || tasks.running.map(&:weight).sum >= jobs
+      (tasks.running? && (tasks.no_waiting? || tasks.failed? || %i[PAUSING QUITTING].include?(state))) || tasks.running.map(&:weight).sum >= jobs
     end
 
     def wait_for_running_tasks
