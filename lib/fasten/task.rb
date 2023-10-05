@@ -2,7 +2,7 @@
 
 module Fasten
   class Task
-    include Fasten::Support::State
+    include ::Fasten::Support::State
 
     attr_accessor :name, :worker_class, :after, :data, :block, :result, :error, :depends, :dependants, :score
 

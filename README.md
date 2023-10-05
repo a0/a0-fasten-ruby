@@ -3,26 +3,30 @@
 Enjoy running ruby code and other tasks, in parallel.
 
 This is a major rewrite, primarly focusing in our current needs:
-  - ruby >= 3.2
-  - macOS and Linux
-  - better error reporting/handling
+
+- ruby >= 3.2
+- macOS and Linux
+- better error reporting/handling
 
 ## Feature Roadmap
 
 ### General
-- [ ] Ruby >= 3.2.
-- [ ] macOS support.
+
+- [X] Ruby >= 3.2.
+- [X] macOS support.
 - [ ] Linux support.
 - [ ] Only one model will be supported. Currently: ThreadPool.
 - [ ] Message passing based implementation, for sending/receiving job data.
 
 ### Task definitions
+
 - [ ] API for creating runners.
 - [ ] Block based code definition.
 - [ ] Custom worker class: custom/dynamic number of workers, code definition, tasks , error handling.
 - [ ] Run shell code using `tty-command`.
 
 ### Execution
+
 - [ ] Tasks are executed in parallel, using thread pools.
 - [ ] Block based code uses a default worker class, which uses the number of cores as the number of workers.
 - [ ] In case of errors, it can be defined to run everything left or stop the whole process.
@@ -31,17 +35,19 @@ This is a major rewrite, primarly focusing in our current needs:
 - [ ] Every task output is redirected to a log file in .fasten/log/«worker»-«task name».log
 - [ ] A (graph) report is generated for all registered tasks.
 
-
 ## Installation
-
 
 Install the gem and add to the application's Gemfile by executing:
 
-    $ bundle add fasten
+```bash
+    bundle add fasten
+```
 
 If bundler is not being used to manage dependencies, install the gem by executing:
 
-    $ gem install fasten
+```bash
+    gem install fasten
+```
 
 ## Usage
 
@@ -57,7 +63,9 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 Just run the provided script and follow the instructions:
 
-    $ bin/release-version
+```bash
+    bin/release-version
+```
 
 ## Contributing
 

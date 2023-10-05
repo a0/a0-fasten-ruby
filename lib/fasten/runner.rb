@@ -2,13 +2,13 @@
 
 module Fasten
   class Runner
-    include Fasten::Support::Logger
-    include Fasten::Support::State
+    include ::Fasten::Support::Logger
+    include ::Fasten::Support::State
 
     attr_accessor :task_list
     attr_reader :fasten_dir
 
-    def initialize(name: File.basename(Dir.getwd), default_worker_class: ::Fasten::Worker, fasten_dir: Fasten::DEFAULT_FASTEN_DIR)
+    def initialize(name: File.basename(Dir.getwd), default_worker_class: ::Fasten::Worker, fasten_dir: ::Fasten::DEFAULT_FASTEN_DIR)
       @name = name
       @default_worker_class = default_worker_class
 
@@ -19,6 +19,10 @@ module Fasten
       @task_list = []
       @task_map = {}
       @task_list_monitor = Monitor.new
+    end
+
+    def [](key)
+      @task_map[key]
     end
 
     def task(name, **opts, &block)

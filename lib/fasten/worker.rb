@@ -4,7 +4,7 @@ require 'parallel'
 
 module Fasten
   class Worker
-    include Fasten::Support::Logger
+    include ::Fasten::Support::Logger
 
     attr_accessor :runner
 
@@ -22,16 +22,16 @@ module Fasten
     end
 
     def perform(task)
-      task.block&.call
+      task.block&.call task, runner
     end
 
-    def name = self.class.to_s
+    def name = @name ||= [runner.name, self.class.to_s].join(' ')
 
     def receive_tasks(tasks)
       @mutex ||= Mutex.new
       @mutex.synchronize do
         tasks.each do |task|
-          break if tasks.count >= max_concurrent_tasks
+          break if @tasks.count >= max_concurrent_tasks
 
           @task_counter += 1
           @tasks.push task

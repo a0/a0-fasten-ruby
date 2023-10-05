@@ -66,7 +66,7 @@ module Fasten
       end
 
       def fasten_log_dir
-        @fasten_dir ||= Fasten::DEFAULT_FASTEN_DIR
+        @fasten_dir ||= ::Fasten::DEFAULT_FASTEN_DIR
         Pathname.new(@fasten_dir).join('log')
       end
 

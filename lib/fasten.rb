@@ -20,7 +20,7 @@ module Fasten
   class Error < StandardError; end
 
   def self.runner(...)
-    Fasten::Runner.new(...)
+    ::Fasten::Runner.new(...)
   end
 
   DEFAULT_FASTEN_DIR = '.fasten'
