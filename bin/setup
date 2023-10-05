@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 IFS=$'\n\t'
 set -vx
+
+cd $(dirname $0)/..
+
+asdf update
+asdf plugin update --all
+brew update
+brew upgrade
+brew install libyaml readline
+asdf install ruby
 
 bundle install
 
