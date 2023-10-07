@@ -5,6 +5,7 @@ require 'parallel'
 module Fasten
   class Worker
     include ::Fasten::Support::Logger
+    include ::Fasten::Support::State
 
     attr_accessor :runner
 
@@ -14,7 +15,15 @@ module Fasten
       @task_counter = 0
       @tasks = []
 
+      state_exec!
       initialize_logger
+      log_ini self, '** STARTED **'
+    end
+
+    def finalize
+      state_done!
+      log_fin self, "** FINALIZED ** task_counter: #{@task_counter}"
+      close_logger
     end
 
     def max_concurrent_tasks
@@ -30,12 +39,14 @@ module Fasten
     def receive_tasks(tasks)
       @mutex ||= Mutex.new
       @mutex.synchronize do
+        max = max_concurrent_tasks
         tasks.each do |task|
-          break if @tasks.count >= max_concurrent_tasks
+          break if @tasks.count >= max
 
           @task_counter += 1
           @tasks.push task
           runner.take_task task
+          log_info "Dispatching task max: #{max} count: #{@tasks.count} state: #{task.state} name: #{task.name}"
           dispatch_task task
         end
       end
@@ -48,20 +59,23 @@ module Fasten
     def redirect_std(task)
       path = redirect_path(task)
       FileUtils.mkdir_p File.dirname(path)
-      @redirect_log = File.new path, 'a'
-      @redirect_log.sync = true
-      StdThreadProxy.thread_io = @redirect_log
-      Thread.current[:FASTEN_LOGGER] = ::Logger.new path, level: @logger.level || ::Logger::INFO, progname: $PROGRAM_NAME
+      task_log_file = File.new path, 'a'
+      task_log_file.sync = true
+      StdThreadProxy.thread_io = task_log_file
+      Thread.current[:FASTEN_LOGGER] = ::Logger.new task_log_file, level: @logger.level || ::Logger::INFO, progname: $PROGRAM_NAME
     end
 
     def restore_std
-      @redirect_log&.close
+      StdThreadProxy.thread_io&.close
+      Thread.current[:FASTEN_LOGGER]&.close
+    rescue StandardError
+      # pass
+    ensure
       StdThreadProxy.thread_io = nil
       Thread.current[:FASTEN_LOGGER] = nil
     end
 
     def dispatch_task(task)
-      log_info "Dispatching task name: #{task.name}"
       Thread.new do
         redirect_std(task)
         log_ini task, 'performing'
@@ -72,12 +86,14 @@ module Fasten
         task.error = e
         log_error "perform error: #{e} backtrace: #{e.backtrace.first(10).join("\n")}"
       ensure
-        @mutex.synchronize do
+        max, count = @mutex.synchronize do
           @tasks.delete task
           runner.report_task(task)
+          [max_concurrent_tasks, @tasks.count]
         end
         log_fin task, 'performed '
         restore_std
+        log_info "   Reported task max: #{max} count: #{count} state: #{task.state} name: #{task.name}"
       end
     end
   end

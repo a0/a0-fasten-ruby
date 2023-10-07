@@ -38,8 +38,13 @@ module Fasten
       end
 
       def log_ini(object, message = nil)
-        object.ini ||= Time.new
-        log_info "ini state: #{object.state} #{object.class} name: #{object.name} #{message}"
+        if object.ini
+          object.dif = Time.new - object.ini
+          log_info "ini state: #{object.state} #{object.class} name: #{object.name} #{message} in #{object.dif}"
+        else
+          object.ini = Time.new
+          log_info "ini state: #{object.state} #{object.class} name: #{object.name} #{message}"
+        end
       end
 
       def log_fin(object, message = nil)
@@ -49,7 +54,6 @@ module Fasten
       end
 
       def close_logger
-        puts "Closing logger #{logger}"
         logger.close if logger.is_a? ::Logger
       end
 

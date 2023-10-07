@@ -19,6 +19,10 @@ module Fasten
       @task_list = []
       @task_map = {}
       @task_list_monitor = Monitor.new
+
+      state_pend!
+      initialize_logger
+      log_ini self, '** CREATED **'
     end
 
     def [](key)
@@ -110,13 +114,13 @@ module Fasten
     end
 
     def start
-      initialize_logger
       state_exec!
       @report_task_queue ||= Queue.new
       run_loop
     end
 
     def run_loop
+      log_ini self, '** STARTING **'
       @keep_run_loop = true
       StdThreadProxy.install
 
@@ -129,6 +133,9 @@ module Fasten
       end
     ensure
       StdThreadProxy.uninstall
+      worker_cleanup
+      state_done!
+      log_fin self, '** STOPPED **'
     end
 
     def loop_distribute_tasks_to_workers
@@ -136,14 +143,14 @@ module Fasten
         stats = %w[task_list pend_list exec_list done_list fail_list].map do |list|
           { list => instance_variable_get("@#{list}")&.count }
         end
-        log_info "-- RUN_LOOP #{stats.to_yaml}"
+        log_info "RUN_LOOP stats #{stats.to_yaml}"
 
         pend_list.group_by(&:worker_class)
       end
 
       return (@keep_run_loop = false) if pend_list.empty? && exec_list.empty?
 
-      log_info "tasks_by_worker_class_map count: #{tasks_by_worker_class_map.transform_values(&:count).as_json.to_yaml}"
+      log_info tasks_by_worker_class_map.transform_values(&:count).as_json.to_yaml
 
       tasks_by_worker_class_map.each do |worker_class, tasks|
         worker_instance(worker_class).receive_tasks tasks
@@ -192,6 +199,11 @@ module Fasten
 
     def worker_instance(worker_class)
       @worker_instance_map[worker_class] ||= worker_class.new(runner: self)
+    end
+
+    def worker_cleanup
+      @worker_instance_map.each_value(&:finalize)
+      @worker_instance_map = {}
     end
 
     def report_task(task) = @report_task_queue.push task
