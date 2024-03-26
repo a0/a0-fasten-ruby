@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "rubocop.vscode-rubocop",
+    "shopify.ruby-lsp",
+    "bierner.markdown-mermaid"
+  ]
+}
